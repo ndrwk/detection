@@ -15,29 +15,6 @@ Detect::~Detect()
 {
 }
 
-__int64 Detect::getHashValue(Mat src)
-{
-	__int64 hash;
-	Mat img;
-	if (src.channels() == 3)
-		cvtColor(src, img, CV_BGR2GRAY);
-	else
-		img = src.clone();
-	resize(img, img, Size(8, 8));
-	int average = mean(img).val[0];
-	Mat mask = (img >= (uchar)average);
-	int i = 0;
-	for (int y = 0; y < mask.rows; y++) {
-		uchar* pData = mask.ptr <uchar>(y);
-		for (int x = 0; x < mask.cols; x++) {
-			if (pData[x]){
-				hash |= 1i64 << i;
-			}
-			i++;
-		}
-	}
-	return hash;
-}
 
 __int64 Detect::calcHammingDistance(__int64 x, __int64 y)
 {
@@ -50,19 +27,17 @@ __int64 Detect::calcHammingDistance(__int64 x, __int64 y)
 	return dist;
 }
 
-void Detect::detection(map <time_t, Mat>& squares, mutex& mutex_squares)
+void Detect::detect(vector<Square>& squares, mutex& mutex_squares)
 {
-	const int range = 5;
+	const int rangeInmillisec = 3000;
 	while (true)
 	{
-		time_t thisTime;
-		time(&thisTime);
 		mutex_squares.lock();
-		//		cout << squares.size() << endl;
-		for (map<time_t, Mat>::iterator iter = squares.begin(); iter != squares.end();)
+		for (vector<Square>::iterator iter = squares.begin(); iter != squares.end();)
 		{
-//			cout << thisTime - (*iter).first << " " << squares.size() << endl;
-			if ((thisTime - (*iter).first) > range)
+			Square square = *iter;
+			milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
+			if ((timeNow.count() - square.getTime()) > rangeInmillisec)
 			{
 //				cout << "erase " << (*iter).first << endl;
 				iter = squares.erase(iter);
@@ -72,15 +47,12 @@ void Detect::detection(map <time_t, Mat>& squares, mutex& mutex_squares)
 				Mat image;
 				//				cout << "display " << (*iter).first << endl;
 				const __int64 percept = -3688730819679167236;
-				__int64 res;
-				Mat img;
-				img = (*iter).second;
-				__int64 hash = getHashValue(img);
-				res = calcHammingDistance(percept, hash);
+				__int64 hash = square.getHash();
+				__int64 res = calcHammingDistance(percept, hash);
 				if (res <= 4)
 				{
 					cout << "hand" << " " << res << endl;
-					imshow("img", img);
+					imshow("img", square.getImg());
 				}
 				iter++;
 

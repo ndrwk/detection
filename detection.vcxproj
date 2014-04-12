@@ -87,11 +87,13 @@
     <ClCompile Include="Capture.cpp" />
     <ClCompile Include="Detect.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Square.cpp" />
     <ClCompile Include="tmp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture.h" />
     <ClInclude Include="Detect.h" />
+    <ClInclude Include="Square.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

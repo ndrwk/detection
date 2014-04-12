@@ -1,12 +1,11 @@
 #include "Capture.h"
 #include "Detect.h"
+#include "Square.h"
 #include<opencv2/opencv.hpp>
 #include<iostream>
 #include<vector>
 #include <thread>
 #include <mutex>
-#include <map>
-#include <time.h>
 
 
 
@@ -14,27 +13,31 @@ using namespace std;
 using namespace cv;
 
 
+vector <Square> squares;
+mutex mutex_squares;
+Detect detect;
+
+const int cameraNumber = 0;
+
+
 int main(int argc, char *argv[])
 {
-//	vector <Mat> squares;
-	map<time_t, Mat> squares;
-	mutex mutex_squares;
-	Capture capture(0);
-	Detect detect;
+	Capture capture(cameraNumber);
 	if (!capture.isOpened())
 	{
+		cout << "Error: Camera #" << cameraNumber << " is not available now." << endl;
 		return -1;
 	}
-	thread thread_found(&Capture::getFound, &capture, ref(squares), ref(mutex_squares));
-	thread thread_detect(&Detect::detection, &detect, ref(squares), ref(mutex_squares));
+	thread capturing(&Capture::getFound, &capture, ref(squares), ref(mutex_squares));
+	thread detecting(&Detect::detect, &detect, ref(squares), ref(mutex_squares));
 
-	if (thread_found.joinable())
+	if (capturing.joinable())
 	{
-		thread_found.join();
+		capturing.join();
 	}
-	if (thread_detect.joinable())
+	if (detecting.joinable())
 	{
-		thread_detect.join();
+		detecting.join();
 	}
 	return 0;
 }

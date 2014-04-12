@@ -1,10 +1,12 @@
 #pragma once
 #include <opencv2/opencv.hpp>
 #include <mutex>
-#include <time.h>
+#include <chrono>
+#include "Square.h"
 
 using namespace cv;
 using namespace std;
+using namespace chrono;
 
 class Capture
 {
@@ -14,7 +16,7 @@ class Capture
 	Mat fgimg;
 	BackgroundSubtractorMOG2 bg;
 	vector<vector<Point>> all_contours;
-	time_t currentTime;
+	milliseconds currentTime;
 
 	bool isIntersected(Rect, Rect);
 	void display();
@@ -25,7 +27,7 @@ public:
 	~Capture();
 	bool isOpened();
 	Mat getFrame();
-	void getFound(map<time_t,Mat>&, mutex&);
+	void getFound(vector<Square>&, mutex&);
 
 };
 

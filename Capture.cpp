@@ -1,7 +1,9 @@
 #include "Capture.h"
 #include <iostream>
 #include <mutex>
+#include <ctime>
 using namespace std;
+using namespace chrono;
 
 
 Capture::Capture(int cameraNumber)
@@ -25,12 +27,12 @@ Mat Capture::getFrame()
 	return frame;
 }
 
-void Capture::getFound(map<time_t,Mat>& squares, mutex& mutex_squares)
+void Capture::getFound(vector<Square>& squares, mutex& mutex_squares)
 {
 	while (true)
 	{
+		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		cap >> frame;
-		time(&currentTime);
 		bg(frame, mask, 0.01);
 		erode(mask, mask, Mat());
 		dilate(mask, mask, Mat());
@@ -93,16 +95,16 @@ void Capture::getFound(map<time_t,Mat>& squares, mutex& mutex_squares)
 				if (((rect.x + side) < frame.cols) & ((rect.y + side) < frame.rows)) {
 					Rect squareBond(rect.x, rect.y, side, side);
 					rectangle(mask, squareBond, Scalar(255, 255, 255), 1);
-//					Mat croppedImage = fgimg(squareBond);
-					Mat croppedImage = frame(squareBond);
+					Mat croppedImage = fgimg(squareBond);
+//					Mat croppedImage = frame(squareBond);
+					Square square(currentTime, croppedImage);
 					mutex_squares.lock();
-//					squares.push_back(croppedImage);
-					squares[currentTime] = croppedImage;
+					squares.push_back(square);
 					mutex_squares.unlock();
 				}
 			}
 		}
-//		displayTime(frame);
+		displayTime(frame);
 		display();
 		waitKey(20);
 	}
@@ -122,8 +124,7 @@ void Capture::display()
 
 void Capture::displayTime(Mat img)
 {
-	struct tm *timeinfo;
-	time(&currentTime);
-	timeinfo = localtime(&currentTime);
-	putText(img, asctime(timeinfo), Point(20, img.rows-40),FONT_HERSHEY_COMPLEX,1,Scalar::all(255),1,8);
+	seconds sec = duration_cast<seconds>(currentTime);
+	time_t timefordisp = sec.count();
+	putText(img, ctime(&timefordisp), Point(20, img.rows-40),FONT_HERSHEY_COMPLEX,1,Scalar::all(255),1,8);
 }

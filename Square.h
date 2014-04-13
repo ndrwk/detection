@@ -9,6 +9,7 @@ class Square
 {
 	chrono::milliseconds timeStamp;
 	cv::Mat img;
+	__int64 hash;
 	__int64 getHashValue(cv::Mat src);
 
 public:

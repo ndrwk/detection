@@ -10,7 +10,7 @@ using namespace chrono;
 
 class Capture
 {
-	VideoCapture cap;
+	VideoCapture capture;
 	Mat frame;
 	Mat mask;
 	Mat fgimg;

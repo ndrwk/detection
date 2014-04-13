@@ -88,7 +88,6 @@
     <ClCompile Include="Detect.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Square.cpp" />
-    <ClCompile Include="tmp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture.h" />

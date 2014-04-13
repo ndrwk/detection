@@ -21,9 +21,6 @@
     <ClCompile Include="Capture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tmp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Detect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -8,7 +8,7 @@ using namespace chrono;
 
 Capture::Capture(int cameraNumber)
 {
-	cap.open(cameraNumber);
+	capture.open(cameraNumber);
 }
 
 Capture::~Capture()
@@ -18,7 +18,7 @@ Capture::~Capture()
 
 bool Capture::isOpened()
 {
-	return cap.isOpened();
+	return capture.isOpened();
 }
 
 
@@ -32,7 +32,7 @@ void Capture::getFound(vector<Square>& squares, mutex& mutex_squares)
 	while (true)
 	{
 		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-		cap >> frame;
+		capture >> frame;
 		bg(frame, mask, 0.01);
 		erode(mask, mask, Mat());
 		dilate(mask, mask, Mat());
@@ -95,9 +95,8 @@ void Capture::getFound(vector<Square>& squares, mutex& mutex_squares)
 				if (((rect.x + side) < frame.cols) & ((rect.y + side) < frame.rows)) {
 					Rect squareBond(rect.x, rect.y, side, side);
 					rectangle(mask, squareBond, Scalar(255, 255, 255), 1);
-					Mat croppedImage = fgimg(squareBond);
-//					Mat croppedImage = frame(squareBond);
-					Square square(currentTime, croppedImage);
+//					Square square(currentTime, frame(squareBond));
+					Square square(currentTime, fgimg(squareBond));
 					mutex_squares.lock();
 					squares.push_back(square);
 					mutex_squares.unlock();

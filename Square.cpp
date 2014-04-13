@@ -5,6 +5,7 @@ Square::Square(chrono::milliseconds time, Mat mat)
 {
 	timeStamp = time;
 	img = mat;
+	hash = getHashValue(img);
 }
 
 
@@ -49,5 +50,5 @@ cv::Mat Square::getImg()
 
 __int64 Square::getHash()
 {
-	return getHashValue(img);
+	return hash;
 }

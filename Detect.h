@@ -12,11 +12,13 @@ using namespace chrono;
 
 class Detect
 {
+	const int timeRange = 3000;
 	__int64 Detect::calcHammingDistance(__int64 x, __int64 y);
 
 public:
 	Detect();
 	~Detect();
 	void Detect::detect(vector<Square>&, mutex&);
+	void Detect::training(vector<Square>&, mutex&);
 };
 

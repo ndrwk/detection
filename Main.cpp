@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	thread capturing(&Capture::getFound, &capture, ref(squares), ref(mutex_squares));
-	thread detecting(&Detect::detect, &detect, ref(squares), ref(mutex_squares));
+	thread detecting(&Detect::training, &detect, ref(squares), ref(mutex_squares));
 
 	if (capturing.joinable())
 	{

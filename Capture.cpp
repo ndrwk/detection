@@ -39,49 +39,37 @@ void Capture::getFound(vector<Square>& squares, mutex& mutex_squares)
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
 		findContours(mask, all_contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+		vector <Rect> bounds;
 		for (vector<vector<Point>>::iterator iter = all_contours.begin(); iter != all_contours.end();)
 		{
-			vector <Point> contour;
-			contour = *iter;
+			vector <Point> contour = *iter;
 			if (contour.size() < 200)
 			{
 				iter = all_contours.erase(iter);
 			}
 			else
 			{
+				bounds.push_back(boundingRect(contour));
 				++iter;
 			}
 		}
-		vector <Rect> bounds;
-		if (all_contours.size() > 0)
+//		vector <Rect> veccont1 = bounds;
+//		vector <Rect> veccont2 = bounds;
+		int contoursSize = bounds.size();
+		if (contoursSize > 0)
 		{
-			Rect bound_rect = boundingRect(all_contours[0]);
-			for (vector<vector<Point>>::iterator iter = all_contours.begin(); iter != all_contours.end();)
+/*
+			for (vector<Rect>::iterator iter_i = veccont1.begin(); iter_i != veccont1.end();iter_i++)
 			{
-				if (isIntersected(bound_rect, boundingRect(*iter)))
+				for (vector<Rect>::iterator iter_j = veccont2.begin(); iter_j != veccont2.end();iter_j++)
 				{
-					bound_rect = bound_rect | boundingRect(*iter);
-					iter = all_contours.erase(iter);
-				}
-				else
-				{
-					++iter;
+					if (isIntersected(*iter_i, *iter_j))
+					{
+						*iter_i = (*iter_i) | (*iter_j);
+					}
 				}
 			}
-			for (vector<vector<Point>>::iterator iter = all_contours.begin(); iter != all_contours.end();)
-			{
-				if (isIntersected(bound_rect, boundingRect(*iter)))
-				{
-					bound_rect = bound_rect | boundingRect(*iter);
-					iter = all_contours.erase(iter);
-				}
-				else
-				{
-					bounds.push_back(boundingRect(*iter));
-					++iter;
-				}
-			}
-			bounds.push_back(bound_rect);
+*/
 			for (vector<Rect>::iterator iter = bounds.begin(); iter != bounds.end(); ++iter)
 			{
 				int side;

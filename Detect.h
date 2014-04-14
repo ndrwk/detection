@@ -14,6 +14,7 @@ class Detect
 {
 	const int timeRange = 3000;
 	__int64 Detect::calcHammingDistance(__int64 x, __int64 y);
+	void Detect::sort(vector<int>);
 
 public:
 	Detect();

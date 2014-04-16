@@ -49,7 +49,7 @@ void Detect::detect(vector<Square>& squares, mutex& mutex_squares)
 {
 	while (true)
 	{
-		cout << squares.size() << endl;
+//		cout << squares.size() << endl;
 		mutex_squares.lock();
 		for (vector<Square>::iterator iter = squares.begin(); iter != squares.end();)
 		{
@@ -67,7 +67,7 @@ void Detect::detect(vector<Square>& squares, mutex& mutex_squares)
 				__int64 res = calcHammingDistance(percept, hash);
 				if (res <= 4)
 				{
-					cout << "hand" << " " << res << endl;
+//					cout << "hand" << " " << res << endl;
 					imshow("img", square.getImg());
 				}
 				iter++;
@@ -84,7 +84,7 @@ void Detect::training(vector<Square>& squares, mutex& mutex_squares)
 {
 	while (true)
 	{
-		cout << squares.size() << endl;
+//		cout << squares.size() << endl;
 		mutex_squares.lock();
 		milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		for (vector<Square>::iterator iter = squares.begin(); iter != squares.end();)
@@ -92,7 +92,7 @@ void Detect::training(vector<Square>& squares, mutex& mutex_squares)
 			Square square = *iter;
 			if ((timeNow.count() - square.getTime()) > timeRange)
 			{
-				//				cout << "erase " << (*iter).first << endl;
+//				cout << "erase " << (*iter).first << endl;
 				iter = squares.erase(iter);
 			}
 			else
@@ -104,6 +104,7 @@ void Detect::training(vector<Square>& squares, mutex& mutex_squares)
 
 		vector <vector <int>> hammDistMat;
 		const int HammingDist = 2;
+		const int repeatCounter = 2;
 		int size = squares.size();
 		if (size > 1)
 		{
@@ -116,24 +117,25 @@ void Detect::training(vector<Square>& squares, mutex& mutex_squares)
 				{
 					hammDistRow.push_back(calcHammingDistance(square.getHash(), squares[j].getHash()));
 				}
-				sort(hammDistRow);
 				hammDistMat.push_back(hammDistRow);
 				i++;
 			}
 			for (int i = 0; i < size; i++)
 			{
+				int counter = 0;
 				for (int j = 0; j < size; j++)
 				{
-					cout << hammDistMat[i][j] << " ";
-/*
-					if ((hammDistMat[i][j] < HammingDist)&(i!=j))
+//					cout << hammDistMat[i][j] << " ";
+					if ((hammDistMat[i][j] < HammingDist)&(i != j))
 					{
-						imgs.push_back(squares[i].getImg());
-						imgs.push_back(squares[j].getImg());
+						counter++;
 					}
-*/
 				}
-				cout << endl;
+				if (counter > repeatCounter)
+				{
+					cout << counter << endl;
+					imshow("res", squares[i].getImg());
+				}
 			}
 
 		}

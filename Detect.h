@@ -3,7 +3,7 @@
 #include <mutex>
 #include <vector>
 #include <chrono>
-#include "Square.h"
+#include "Frame.h"
 
 
 using namespace cv;
@@ -12,14 +12,12 @@ using namespace chrono;
 
 class Detect
 {
-	const int timeRange = 3000;
-	__int64 Detect::calcHammingDistance(__int64 x, __int64 y);
-	void Detect::sort(vector<int>);
+	const int timeRange = 3000; // in milliseconds
 
 public:
 	Detect();
 	~Detect();
-	void Detect::detect(vector<Square>&, mutex&);
-	void Detect::training(vector<Square>&, mutex&);
+	void Detect::detect(vector<Frame>&, mutex&);
+	void Detect::training(vector<Frame>&, mutex&);
 };
 

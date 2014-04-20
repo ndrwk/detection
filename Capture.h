@@ -2,7 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <mutex>
 #include <chrono>
-#include "Square.h"
+#include "Frame.h"
 
 using namespace cv;
 using namespace std;
@@ -10,6 +10,7 @@ using namespace chrono;
 
 class Capture
 {
+	const int minContLenght = 200;
 	VideoCapture capture;
 	Mat frame;
 	Mat mask;
@@ -18,6 +19,7 @@ class Capture
 	vector<vector<Point>> all_contours;
 	milliseconds currentTime;
 
+	void sort(vector<vector<Point>>);
 	bool isIntersected(Rect, Rect);
 	void display();
 	void displayTime(Mat);
@@ -27,7 +29,7 @@ public:
 	~Capture();
 	bool isOpened();
 	Mat getFrame();
-	void getFound(vector<Square>&, mutex&);
+	void find(vector<Frame>&, mutex&);
 
 };
 

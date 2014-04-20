@@ -18,127 +18,55 @@ Detect::~Detect()
 }
 
 
-__int64 Detect::calcHammingDistance(__int64 x, __int64 y)
-{
-	__int64 dist = 0, val = x ^ y;
-	while (val)
-	{
-		++dist;
-		val &= val - 1;
-	}
-	return dist;
-}
 
-void Detect::sort(vector<int> arr)
-{
-	int i, j, key;
-	for (i = 1; i < arr.size(); i++)
-	{
-		key = arr[i];
-		j = i - 1;
-		while (j >= 0 && arr[j] > key)
-		{
-			arr[j + 1] = arr[j];
-			j--;
-		}
-		arr[j + 1] = key;
-	}
-}
-
-void Detect::detect(vector<Square>& squares, mutex& mutex_squares)
+void Detect::detect(vector<Frame>& frames, mutex& mutex_frames)
 {
 	while (true)
 	{
-//		cout << squares.size() << endl;
-		mutex_squares.lock();
-		for (vector<Square>::iterator iter = squares.begin(); iter != squares.end();)
+		mutex_frames.lock();
+		for (vector<Frame>::iterator iter = frames.begin(); iter != frames.end();)
 		{
-			Square square = *iter;
+			Frame frame = *iter;
 			milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-			if ((timeNow.count() - square.getTime()) > timeRange)
+			if ((timeNow.count() - frame.getTime()) > timeRange)
 			{
-				//				cout << "erase " << (*iter).first << endl;
-				iter = squares.erase(iter);
+				iter = frames.erase(iter);
 			}
 			else
 			{
-				const __int64 percept = -3688730819679167236;
-				__int64 hash = square.getHash();
-				__int64 res = calcHammingDistance(percept, hash);
-				if (res <= 4)
-				{
-//					cout << "hand" << " " << res << endl;
-					imshow("img", square.getImg());
-				}
 				iter++;
-
 			}
 		}
-		mutex_squares.unlock();
+		for (vector<Frame>::iterator iter0 = frames.begin(); iter0 != frames.end(); iter0++)
+		{
+			Frame frame0 = *iter0;
+			vector<vector<Point>> contours0 = frame0.getContours();
+			for (vector<vector<Point>>::iterator contIter0 = contours0.begin(); contIter0 != contours0.end(); contIter0++)
+			{
+				vector<Point> cont0 = *contIter0;
+				for (vector<Frame>::iterator iter = frames.begin(); iter != frames.end(); iter++)
+				{
+					Frame frame = *iter;
+					vector<vector<Point>> contours = frame.getContours();
+					for (vector<vector<Point>>::iterator contIter = contours.begin(); contIter != contours.end(); contIter++)
+					{
+						vector<Point> cont = *contIter;
+						double match = matchShapes(cont0, cont, CV_CONTOURS_MATCH_I1, 0);
+						cout << match << endl;
+					}
+				}
+			}
+		}
+
+		
+		mutex_frames.unlock();
 		//		this_thread::sleep_for(chrono::milliseconds(20));
 		waitKey(20);
 	}
 }
 
-void Detect::training(vector<Square>& squares, mutex& mutex_squares)
+void Detect::training(vector<Frame>& squares, mutex& mutex_squares)
 {
-	while (true)
-	{
-//		cout << squares.size() << endl;
-		mutex_squares.lock();
-		milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-		for (vector<Square>::iterator iter = squares.begin(); iter != squares.end();)
-		{
-			Square square = *iter;
-			if ((timeNow.count() - square.getTime()) > timeRange)
-			{
-//				cout << "erase " << (*iter).first << endl;
-				iter = squares.erase(iter);
-			}
-			else
-			{
-//				cout << square.getTime() << " -- " << square.getHash() << endl;
-				iter++;
-			}
-		}
-
-		vector <vector <int>> hammDistMat;
-		const int HammingDist = 2;
-		const int repeatCounter = 2;
-		int size = squares.size();
-		if (size > 1)
-		{
-			int i = 0;
-			for (vector<Square>::iterator iter = squares.begin(); iter != squares.end(); iter++)
-			{
-				Square square = *iter;
-				vector <int> hammDistRow;
-				for (int j = 0; j < size; j++)
-				{
-					hammDistRow.push_back(calcHammingDistance(square.getHash(), squares[j].getHash()));
-				}
-				hammDistMat.push_back(hammDistRow);
-				i++;
-			}
-			for (int i = 0; i < size; i++)
-			{
-				int counter = 0;
-				for (int j = 0; j < size; j++)
-				{
-//					cout << hammDistMat[i][j] << " ";
-					if ((hammDistMat[i][j] < HammingDist)&(i != j))
-					{
-						counter++;
-					}
-				}
-				if (counter > repeatCounter)
-				{
-					cout << counter << endl;
-					imshow("res", squares[i].getImg());
-				}
-			}
-
-		}
 				/*
 				string filename = "c:\\temp\\opencv\\";
 				char hashtxt[256] = "";
@@ -159,7 +87,7 @@ void Detect::training(vector<Square>& squares, mutex& mutex_squares)
 		
 		mutex_squares.unlock();
 		waitKey(20);
-	}
+	
 }
 
 

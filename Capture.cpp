@@ -27,7 +27,24 @@ Mat Capture::getFrame()
 	return frame;
 }
 
-void Capture::getFound(vector<Square>& squares, mutex& mutex_squares)
+void Capture::sort(vector<vector<Point>> contours)
+{
+	vector<Point> temp;
+	for (int i = 0; i < (contours.size() - 1); i++)
+	{
+		for (int j = 0; j < contours.size() - i - 1; j++)
+		{
+			if (contours[j].size() < contours[j + 1].size())
+			{
+				temp = contours[j];
+				contours[j] = contours[j + 1];
+				contours[j + 1] = temp;
+			}
+		}
+	}
+}
+
+void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 {
 	while (true)
 	{
@@ -39,57 +56,25 @@ void Capture::getFound(vector<Square>& squares, mutex& mutex_squares)
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
 		findContours(mask, all_contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-		vector <Rect> bounds;
 		for (vector<vector<Point>>::iterator iter = all_contours.begin(); iter != all_contours.end();)
 		{
 			vector <Point> contour = *iter;
-			if (contour.size() < 200)
+			if (contour.size() < minContLenght)
 			{
 				iter = all_contours.erase(iter);
 			}
 			else
 			{
-				bounds.push_back(boundingRect(contour));
 				++iter;
 			}
 		}
-//		vector <Rect> veccont1 = bounds;
-//		vector <Rect> veccont2 = bounds;
-		int contoursSize = bounds.size();
-		if (contoursSize > 0)
+		if (all_contours.size() > 0)
 		{
-/*
-			for (vector<Rect>::iterator iter_i = veccont1.begin(); iter_i != veccont1.end();iter_i++)
-			{
-				for (vector<Rect>::iterator iter_j = veccont2.begin(); iter_j != veccont2.end();iter_j++)
-				{
-					if (isIntersected(*iter_i, *iter_j))
-					{
-						*iter_i = (*iter_i) | (*iter_j);
-					}
-				}
-			}
-*/
-			for (vector<Rect>::iterator iter = bounds.begin(); iter != bounds.end(); ++iter)
-			{
-				int side;
-				Rect rect = *iter;
-				if (rect.height > rect.width){
-					side = rect.height;
-				}
-				else {
-					side = rect.width;
-				}
-				if (((rect.x + side) < frame.cols) & ((rect.y + side) < frame.rows)) {
-					Rect squareBond(rect.x, rect.y, side, side);
-					rectangle(mask, squareBond, Scalar(255, 255, 255), 1);
-//					Square square(currentTime, frame(squareBond));
-					Square square(currentTime, fgimg(squareBond));
-					mutex_squares.lock();
-					squares.push_back(square);
-					mutex_squares.unlock();
-				}
-			}
+			sort(all_contours);
+			Frame forSave(currentTime, frame, all_contours);
+			mutex_frames.lock();
+			frames.push_back(forSave);
+			mutex_frames.unlock();
 		}
 		displayTime(frame);
 		display();
@@ -106,6 +91,7 @@ void Capture::display()
 {
 	imshow("mask", mask);
 	imshow("fgimg", fgimg);
+	drawContours(frame, all_contours, -1, Scalar(255, 0, 0), 2);
 	imshow("frame", frame);
 }
 

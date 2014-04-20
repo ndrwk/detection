@@ -5,19 +5,18 @@
 using namespace std;
 using namespace cv;
 
-class Square
+class Frame
 {
 	chrono::milliseconds timeStamp;
 	cv::Mat img;
-	__int64 hash;
-	__int64 getHashValue(cv::Mat src);
+	vector<vector<Point>> allContours;
 
 public:
-	Square(chrono::milliseconds, cv::Mat);
-	~Square();
-	__int64 getTime();
+	Frame(chrono::milliseconds, cv::Mat, vector<vector<Point>>);
+	~Frame();
+	long long getTime();
 	cv::Mat getImg();
-	__int64 getHash();
+	vector<vector<Point>> getContours();
 
 };
 

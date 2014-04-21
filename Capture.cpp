@@ -89,9 +89,9 @@ bool Capture::isIntersected(Rect rect1, Rect rect2)
 
 void Capture::display()
 {
+	drawContours(mask, all_contours, -1, Scalar(255, 0, 0), 2);
 	imshow("mask", mask);
 	imshow("fgimg", fgimg);
-	drawContours(frame, all_contours, -1, Scalar(255, 0, 0), 2);
 	imshow("frame", frame);
 }
 

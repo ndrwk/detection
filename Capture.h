@@ -10,19 +10,22 @@ using namespace chrono;
 
 class Capture
 {
-	const int minContLenght = 200;
+	const int MINRECTPERIMETR = 100;
 	VideoCapture capture;
 	Mat frame;
 	Mat mask;
 	Mat fgimg;
 	BackgroundSubtractorMOG2 bg;
-	vector<vector<Point>> all_contours;
+	vector<vector<Point>> allContours;
+	vector<Rect> allRects;
 	milliseconds currentTime;
 
-	void sort(vector<vector<Point>>);
-	bool isIntersected(Rect, Rect);
+//	void sort(vector<Rect>);
+//	bool isIntersected(Rect, Rect);
 	void display();
 	void displayTime(Mat);
+	void uniteRect(vector<Rect>);
+
 
 public:
 	Capture(int);

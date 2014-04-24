@@ -37,6 +37,7 @@ void Detect::detect(vector<Frame>& frames, mutex& mutex_frames)
 				iter++;
 			}
 		}
+/*
 		for (vector<Frame>::iterator iter0 = frames.begin(); iter0 != frames.end(); iter0++)
 		{
 			Frame frame0 = *iter0;
@@ -57,6 +58,7 @@ void Detect::detect(vector<Frame>& frames, mutex& mutex_frames)
 				}
 			}
 		}
+*/
 
 		
 		mutex_frames.unlock();

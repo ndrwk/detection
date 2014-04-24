@@ -1,11 +1,11 @@
 #include "Frame.h"
 
 
-Frame::Frame(chrono::milliseconds time, Mat mat, vector<vector<Point>> contours)
+Frame::Frame(chrono::milliseconds time, Mat mat, vector<Rect> rects)
 {
 	timeStamp = time;
 	img = mat;
-	allContours = contours;
+	allRects = rects;
 }
 
 
@@ -25,7 +25,7 @@ cv::Mat Frame::getImg()
 	return img;
 }
 
-vector<vector<Point>> Frame::getContours()
+vector<Rect> Frame::getRects()
 {
-	return allContours;
+	return allRects;
 }

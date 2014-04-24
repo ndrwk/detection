@@ -60,9 +60,12 @@ void Detect::detect(vector<Frame>& frames, mutex& mutex_frames)
 		}
 */
 
-		
+		if (frames.size() > 0)
+		{
+			frame = frames[0].getImg();
+			display();
+		}
 		mutex_frames.unlock();
-		//		this_thread::sleep_for(chrono::milliseconds(20));
 		waitKey(20);
 	}
 }
@@ -92,6 +95,10 @@ void Detect::training(vector<Frame>& squares, mutex& mutex_squares)
 	
 }
 
+void Detect::display()
+{
+	imshow("frame", frame);
+}
 
 
 

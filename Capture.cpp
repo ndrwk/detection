@@ -108,36 +108,30 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 				}
 			}
 			uniteRect(rects);
-			allRects = rects;
-			for (vector<Rect>::iterator iter = allRects.begin(); iter != allRects.end();)
+			for (vector<Rect>::iterator iter = rects.begin(); iter != rects.end();)
 			{
 				Rect tmpRect = *iter;
 				if (2*(tmpRect.width+tmpRect.height) < MINRECTPERIMETR)
 				{
-					iter = allRects.erase(iter);
+					iter = rects.erase(iter);
 				}
 				else
 				{
 					++iter;
 				}
 			}
-			Frame forSave(currentTime, frame, allContours);
+			allRects = rects;
+			Frame forSave(currentTime, frame, allRects);
 			mutex_frames.lock();
 			frames.push_back(forSave);
 			mutex_frames.unlock();
 		}
-		displayTime(frame);
-		display();
+//		displayTime(frame);
+//		display();
 		waitKey(20);
 	}
 }
 
-/*
-bool Capture::isIntersected(Rect rect1, Rect rect2)
-{
-	return ((rect1 & rect2).width != 0);
-}
-*/
 
 void Capture::display()
 {

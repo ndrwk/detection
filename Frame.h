@@ -9,14 +9,13 @@ class Frame
 {
 	chrono::milliseconds timeStamp;
 	cv::Mat img;
-	vector<vector<Point>> allContours;
+	vector<Rect> allRects;
 
 public:
-	Frame(chrono::milliseconds, cv::Mat, vector<vector<Point>>);
+	Frame(chrono::milliseconds, cv::Mat, vector<Rect>);
 	~Frame();
 	long long getTime();
 	cv::Mat getImg();
-	vector<vector<Point>> getContours();
-
+	vector<Rect> getRects();
 };
 

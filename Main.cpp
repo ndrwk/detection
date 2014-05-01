@@ -29,11 +29,17 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	thread capturing(&Capture::find, &capture, ref(frames), ref(mutex_frames));
-	thread detecting(&Detect::detect, &detect, ref(frames), ref(mutex_frames));
+	thread cutting(&Capture::cut, &capture, ref(frames), ref(mutex_frames));
+	thread detecting(&Detect::detectOnRects, &detect, ref(frames), ref(mutex_frames));
 
 	if (capturing.joinable())
 	{
 		capturing.join();
+	}
+
+	if (cutting.joinable())
+	{
+		cutting.join();
 	}
 
 	if (detecting.joinable())

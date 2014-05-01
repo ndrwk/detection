@@ -12,14 +12,12 @@ using namespace chrono;
 
 class Detect
 {
-	const int timeRange = 3000; // in milliseconds
-	Mat frame;
 
 public:
 	Detect();
 	~Detect();
-	void Detect::detect(vector<Frame>&, mutex&);
-	void Detect::training(vector<Frame>&, mutex&);
-	void Detect::display();
+	void Detect::detectOnContours(vector<Frame>&, mutex&);
+	void Detect::detectOnRects(vector<Frame>&, mutex&);
+	void Detect::display(Mat);
 };
 

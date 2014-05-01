@@ -8,14 +8,17 @@ using namespace cv;
 class Frame
 {
 	chrono::milliseconds timeStamp;
-	cv::Mat img;
+	Mat img, fgimg;
 	vector<Rect> allRects;
+	vector <vector<Point>> allContours;
 
 public:
-	Frame(chrono::milliseconds, cv::Mat, vector<Rect>);
+	Frame(chrono::milliseconds, Mat, vector<Rect>, Mat, vector<vector<Point>>);
 	~Frame();
 	long long getTime();
-	cv::Mat getImg();
+	Mat getImg();
+	Mat getFgimg();
 	vector<Rect> getRects();
+	vector<vector<Point>> getContours();
 };
 

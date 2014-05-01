@@ -19,6 +19,8 @@ class Capture
 	vector<vector<Point>> allContours;
 	vector<Rect> allRects;
 	milliseconds currentTime;
+	const int timeRange = 3000; // in milliseconds
+
 
 //	void sort(vector<Rect>);
 //	bool isIntersected(Rect, Rect);
@@ -33,6 +35,7 @@ public:
 	bool isOpened();
 	Mat getFrame();
 	void find(vector<Frame>&, mutex&);
+	void cut(vector<Frame>&, mutex&);
 
 };
 

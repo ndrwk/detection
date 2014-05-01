@@ -19,86 +19,119 @@ Detect::~Detect()
 
 
 
-void Detect::detect(vector<Frame>& frames, mutex& mutex_frames)
+void Detect::detectOnContours(vector<Frame>& frames, mutex& mutex_frames)
 {
+	vector<Frame> copy_frames;
 	while (true)
 	{
+
 		mutex_frames.lock();
-		for (vector<Frame>::iterator iter = frames.begin(); iter != frames.end();)
+		copy_frames = frames;
+		mutex_frames.unlock();
+		for (vector<Frame>::iterator iter = copy_frames.begin(); iter != copy_frames.end(); iter++)
 		{
 			Frame frame = *iter;
-			milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-			if ((timeNow.count() - frame.getTime()) > timeRange)
+			vector<vector<Point>> contours;
+			contours = frame.getContours();
+
+			for (vector<vector<Point>>::iterator iterC = contours.begin(); iterC != contours.end(); iterC++)
 			{
-				iter = frames.erase(iter);
-			}
-			else
-			{
-				iter++;
-			}
-		}
-/*
-		for (vector<Frame>::iterator iter0 = frames.begin(); iter0 != frames.end(); iter0++)
-		{
-			Frame frame0 = *iter0;
-			vector<vector<Point>> contours0 = frame0.getContours();
-			for (vector<vector<Point>>::iterator contIter0 = contours0.begin(); contIter0 != contours0.end(); contIter0++)
-			{
-				vector<Point> cont0 = *contIter0;
-				for (vector<Frame>::iterator iter = frames.begin(); iter != frames.end(); iter++)
+				vector<Point> cont = *iterC;
+				int counter = 0;
+				for (vector<Frame>::iterator iterI = copy_frames.begin(); iterI != copy_frames.end(); iterI++)
 				{
-					Frame frame = *iter;
-					vector<vector<Point>> contours = frame.getContours();
-					for (vector<vector<Point>>::iterator contIter = contours.begin(); contIter != contours.end(); contIter++)
+					vector<vector<Point>> contsI = (*iterI).getContours();
+					for (vector<vector<Point>>::iterator iterJ = contsI.begin(); iterJ != contsI.end(); iterJ++)
 					{
-						vector<Point> cont = *contIter;
-						double match = matchShapes(cont0, cont, CV_CONTOURS_MATCH_I1, 0);
-						cout << match << endl;
+						double match = matchShapes(cont, *iterJ, CV_CONTOURS_MATCH_I1, 0);
+						if ((match < 0.2)&((iter-copy_frames.begin())==(iterI-copy_frames.begin()))) counter++;
 					}
+				}
+//				cout << counter << endl;
+				if (counter>1)
+				{
+					Mat pic = frame.getFgimg();
+					Rect rect = boundingRect(cont);
+					rectangle(pic, rect, Scalar(0, 255, 0), 3, 8, 0);
+					display(pic);
 				}
 			}
 		}
-*/
-
-		if (frames.size() > 0)
-		{
-			frame = frames[0].getImg();
-			display();
-		}
-		mutex_frames.unlock();
 		waitKey(20);
 	}
 }
 
-void Detect::training(vector<Frame>& squares, mutex& mutex_squares)
+void Detect::detectOnRects(vector<Frame>& frames, mutex& mutex_frames)
 {
-				/*
-				string filename = "c:\\temp\\opencv\\";
-				char hashtxt[256] = "";
-				__int64 hash = square.getHash();
-				_i64toa(hash, hashtxt, 10);
-				filename = filename + hashtxt + ".png";
-				//			cout << filename << endl;
-				try
+	vector<Frame> copy_frames;
+	while (true)
+	{
+
+		mutex_frames.lock();
+		copy_frames = frames;
+		mutex_frames.unlock();
+		for (vector<Frame>::iterator iter = copy_frames.begin(); iter != copy_frames.end(); iter++)
+		{
+			vector<Rect> rects = (*iter).getRects();
+			Mat pic = (*iter).getImg();
+			cvtColor(pic, pic, CV_BGR2GRAY);
+			for (vector<Rect>::iterator iterC = rects.begin(); iterC != rects.end(); iterC++)
+			{
+				Rect bondRect = *iterC;
+				Mat boundedPic = pic(bondRect);
+				Mat edges;
+//				threshold(boundedPic, boundedPic, 25, 255, CV_THRESH_BINARY);
+				Canny(boundedPic, edges, 5, 200, 3);
+				int counter = 0;
+				edges.copyTo(boundedPic,pic);
+/*
+				for (vector<Frame>::iterator iterI = copy_frames.begin(); iterI != copy_frames.end(); iterI++)
 				{
-					imwrite(filename, square.getImg());
+					vector<vector<Point>> contsI = (*iterI).getContours();
+					for (vector<vector<Point>>::iterator iterJ = contsI.begin(); iterJ != contsI.end(); iterJ++)
+					{
+						double match = matchShapes(cont, *iterJ, CV_CONTOURS_MATCH_I1, 0);
+						if ((match < 0.2)&((iter - copy_frames.begin()) == (iterI - copy_frames.begin()))) counter++;
+					}
 				}
-				catch (runtime_error& ex)
+				//				cout << counter << endl;
+				if (counter>1)
 				{
-					fprintf(stderr, "Exception converting image to PNG format: %s\n", ex.what());
-					break;
+					Mat pic = frame.getFgimg();
+					Rect rect = boundingRect(cont);
+					rectangle(pic, rect, Scalar(0, 255, 0), 3, 8, 0);
+					display(pic);
 				}
-				*/
-		
-		mutex_squares.unlock();
+*/
+			}
+			imshow("123", pic);
+
+		}
 		waitKey(20);
-	
+	}
 }
 
-void Detect::display()
+void Detect::display(Mat pic)
 {
-	imshow("frame", frame);
+	imshow("pic", pic);
 }
 
 
 
+/*
+string filename = "c:\\temp\\opencv\\";
+char hashtxt[256] = "";
+__int64 hash = square.getHash();
+_i64toa(hash, hashtxt, 10);
+filename = filename + hashtxt + ".png";
+//			cout << filename << endl;
+try
+{
+imwrite(filename, square.getImg());
+}
+catch (runtime_error& ex)
+{
+fprintf(stderr, "Exception converting image to PNG format: %s\n", ex.what());
+break;
+}
+*/

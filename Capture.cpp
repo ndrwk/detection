@@ -77,6 +77,29 @@ void Capture::uniteRect(vector<Rect> rects)
 
 }
 
+void Capture::cut(vector<Frame>& frames, mutex& mutex_frames)
+{
+	while (true)
+	{
+		mutex_frames.lock();
+		for (vector<Frame>::iterator iter = frames.begin(); iter != frames.end();)
+		{
+			Frame frame = *iter;
+			milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
+			if ((timeNow.count() - frame.getTime()) > timeRange)
+			{
+				iter = frames.erase(iter);
+			}
+			else
+			{
+				iter++;
+			}
+		}
+		mutex_frames.unlock();
+	}
+}
+
+
 void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 {
 	while (true)
@@ -84,11 +107,17 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		capture >> frame;
 		bg(frame, mask, 0.01);
-		erode(mask, mask, Mat());
-		dilate(mask, mask, Mat());
+//		erode(mask, mask, Mat());
+//		dilate(mask, mask, Mat());
+		Mat temp;
+		const int niters = 3;
+		dilate(mask, temp, Mat(), Point(-1, -1), niters);
+		erode(temp, temp, Mat(), Point(-1, -1), niters * 2);
+		dilate(temp, temp, Mat(), Point(-1, -1), niters);
+
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
-		findContours(mask, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+		findContours(temp, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 		if ((allContours.size() > 0)&(allContours.size()<200))
 		{
 			vector<Rect> rects;
@@ -121,13 +150,13 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 				}
 			}
 			allRects = rects;
-			Frame forSave(currentTime, frame, allRects);
+			Frame forSave(currentTime, frame, allRects, fgimg, allContours);
 			mutex_frames.lock();
 			frames.push_back(forSave);
 			mutex_frames.unlock();
 		}
 //		displayTime(frame);
-//		display();
+		display();
 		waitKey(20);
 	}
 }
@@ -142,8 +171,8 @@ void Capture::display()
 		string stringNumber;
 		ss << number;
 		stringNumber = ss.str();
-		rectangle(frame, *i, Scalar(255, 0, 0), 1, 8, 0);
-		putText(frame, stringNumber, Point((*i).x + 5, (*i).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+		rectangle(fgimg, *i, Scalar(255, 0, 0), 1, 8, 0);
+		putText(fgimg, stringNumber, Point((*i).x + 5, (*i).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 	}
 	drawContours(mask, allContours, -1, Scalar(255, 0, 0), 2);
 	imshow("mask", mask);

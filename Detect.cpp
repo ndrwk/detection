@@ -83,7 +83,7 @@ void Detect::detectOnRects(vector<Frame>& frames, mutex& mutex_frames)
 //				threshold(boundedPic, boundedPic, 25, 255, CV_THRESH_BINARY);
 				Canny(boundedPic, edges, 5, 200, 3);
 				int counter = 0;
-				edges.copyTo(boundedPic,pic);
+//				edges.copyTo(boundedPic,pic);
 /*
 				for (vector<Frame>::iterator iterI = copy_frames.begin(); iterI != copy_frames.end(); iterI++)
 				{
@@ -117,21 +117,3 @@ void Detect::display(Mat pic)
 }
 
 
-
-/*
-string filename = "c:\\temp\\opencv\\";
-char hashtxt[256] = "";
-__int64 hash = square.getHash();
-_i64toa(hash, hashtxt, 10);
-filename = filename + hashtxt + ".png";
-//			cout << filename << endl;
-try
-{
-imwrite(filename, square.getImg());
-}
-catch (runtime_error& ex)
-{
-fprintf(stderr, "Exception converting image to PNG format: %s\n", ex.what());
-break;
-}
-*/

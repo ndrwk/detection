@@ -11,6 +11,11 @@ Capture::Capture(int cameraNumber)
 	capture.open(cameraNumber);
 }
 
+Capture::Capture(string fileName)
+{
+	capture.open(fileName);
+}
+
 Capture::~Capture()
 {
 
@@ -27,25 +32,6 @@ Mat Capture::getFrame()
 	return frame;
 }
 
-
-/*
-void Capture::sort(vector<Rect> rects)
-{
-	Rect temp;
-	for (int i = 0; i < (rects.size() - 1); i++)
-	{
-		for (int j = 0; j < rects.size() - i - 1; j++)
-		{
-			if ((rects[j].height+rects[j].width)<(rects[j+1].height+rects[j+1].width))
-			{
-				temp = rects[j];
-				rects[j] = rects[j + 1];
-				rects[j + 1] = temp;
-			}
-		}
-	}
-}
-*/
 
 
 void Capture::uniteRect(vector<Rect> rects)
@@ -82,7 +68,7 @@ void Capture::cut(vector<Frame>& frames, mutex& mutex_frames)
 	while (true)
 	{
 		mutex_frames.lock();
-		for (vector<Frame>::iterator iter = frames.begin(); iter != frames.end();)
+		for (auto iter = frames.begin(); iter != frames.end();)
 		{
 			Frame frame = *iter;
 			milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
@@ -106,38 +92,60 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 	{
 		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		capture >> frame;
+
+
+/*
+		Mat tmp, tmp1, tmp2;
+		int morph_size = 1;
+		int size = 2 * morph_size + 1;
+		Mat element = getStructuringElement(MORPH_CROSS, Size(size, size), Point(-1,-1));
+		morphologyEx(frame, tmp, MORPH_GRADIENT, element);
+		cvtColor(tmp, tmp, CV_RGB2GRAY);
+		imshow("1", tmp);
+		threshold(tmp, tmp1, 20, 255, THRESH_BINARY);
+		imshow("2", tmp1);
+*/
+
 		bg(frame, mask, 0.01);
-//		erode(mask, mask, Mat());
-//		dilate(mask, mask, Mat());
 		Mat temp;
+
 		const int niters = 3;
 		dilate(mask, temp, Mat(), Point(-1, -1), niters);
 		erode(temp, temp, Mat(), Point(-1, -1), niters * 2);
 		dilate(temp, temp, Mat(), Point(-1, -1), niters);
-
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
+		allHulls.clear();
+		allContours.clear();
 		findContours(temp, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-		if ((allContours.size() > 0)&(allContours.size()<200))
+
+/*
+		allHulls.clear();
+		findContours(tmp1, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+*/
+		if ((allContours.size() > 0)&(allContours.size()<2000))
 		{
 			vector<Rect> rects;
-			for (vector<vector<Point>>::iterator contIter0 = allContours.begin(); contIter0 != allContours.end(); )
+			for (auto contIter0 = allContours.begin(); contIter0 != allContours.end(); )
 			{
 				vector<Point> contour = *contIter0;
+				vector<Point> hull;
 				if (contour.size() < MINRECTPERIMETR)
 				{
 					contIter0 = allContours.erase(contIter0);
 				}
 				else
 				{
-					Rect rect = boundingRect(contour);
+					convexHull(Mat(contour), hull, false);
+					allHulls.push_back(hull);
+					Rect rect = boundingRect(hull);
 					rects.push_back(rect);
 					//				rectangle(frame, rect, Scalar(0, 0, 255), 1, 8, 0);
 					contIter0++;
 				}
 			}
 			uniteRect(rects);
-			for (vector<Rect>::iterator iter = rects.begin(); iter != rects.end();)
+			for (auto iter = rects.begin(); iter != rects.end();)
 			{
 				Rect tmpRect = *iter;
 				if (2*(tmpRect.width+tmpRect.height) < MINRECTPERIMETR)
@@ -164,19 +172,34 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 
 void Capture::display()
 {
-	for (vector<Rect>::iterator i = allRects.begin(); i != allRects.end(); i++)
+/*
+	Mat tmp, tmp1, tmp2;
+	cvtColor(frame, tmp2, CV_RGB2GRAY);
+	int morph_elem = 0;
+	int morph_size = 1;
+	Mat element = getStructuringElement(morph_elem, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
+	morphologyEx(tmp2, tmp, MORPH_GRADIENT, element);
+	imshow("morph", tmp);
+	vector<vector<Point>> conts;
+	threshold(tmp, tmp1, 10, 255, THRESH_BINARY);
+//	findContours(tmp1, conts, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+//	drawContours(tmp1, conts, -1, Scalar(255, 0, 0), 2);
+	imshow("123", tmp1);
+*/
+
+	for (auto i = allRects.begin(); i != allRects.end(); i++)
 	{
 		int number = i - allRects.begin();
 		stringstream ss;
-		string stringNumber;
 		ss << number;
-		stringNumber = ss.str();
-		rectangle(fgimg, *i, Scalar(255, 0, 0), 1, 8, 0);
-		putText(fgimg, stringNumber, Point((*i).x + 5, (*i).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+		string stringNumber = ss.str();
+		rectangle(frame, *i, Scalar(255, 0, 0), 1, 8, 0);
+		putText(frame, stringNumber, Point((*i).x + 5, (*i).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 	}
-	drawContours(mask, allContours, -1, Scalar(255, 0, 0), 2);
-	imshow("mask", mask);
-	imshow("fgimg", fgimg);
+	drawContours(frame, allHulls, -1, Scalar(0, 255, 0), 2);
+	//	drawContours(frame, allContours, -1, Scalar(255, 0, 0), 2);
+//	imshow("mask", mask);
+//	imshow("fgimg", fgimg);
 	imshow("frame", frame);
 }
 

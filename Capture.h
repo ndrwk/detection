@@ -17,13 +17,12 @@ class Capture
 	Mat fgimg;
 	BackgroundSubtractorMOG2 bg;
 	vector<vector<Point>> allContours;
+	vector<vector<Point>> allHulls;
 	vector<Rect> allRects;
 	milliseconds currentTime;
-	const int timeRange = 3000; // in milliseconds
+	const int timeRange = 2000; // in milliseconds
 
 
-//	void sort(vector<Rect>);
-//	bool isIntersected(Rect, Rect);
 	void display();
 	void displayTime(Mat);
 	void uniteRect(vector<Rect>);
@@ -31,6 +30,7 @@ class Capture
 
 public:
 	Capture(int);
+	Capture(string);
 	~Capture();
 	bool isOpened();
 	Mat getFrame();

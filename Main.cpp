@@ -1,4 +1,4 @@
-#include "Capture.h"
+﻿#include "Capture.h"
 #include "Detect.h"
 #include "Frame.h"
 #include "FileReader.h"
@@ -20,7 +20,8 @@ mutex mutex_frames;
 Detect detect;
 
 const int cameraNumber = 0;
-const string fileName = R"(C:\Temp\cats\cats.avi)";
+//const string fileName = R"(C:\Temp\cats\cats.avi)";
+const string fileName = R"(C:\Temp\cats\768.avi)";
 
 
 

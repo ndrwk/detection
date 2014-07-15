@@ -15,7 +15,6 @@ class Capture
 	Mat frame;
 	Mat mask;
 	Mat fgimg;
-	BackgroundSubtractorMOG2 bg;
 	vector<vector<Point>> allContours;
 	vector<vector<Point>> allHulls;
 	vector<Rect> allRects;

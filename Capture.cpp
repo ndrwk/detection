@@ -88,25 +88,29 @@ void Capture::cut(vector<Frame>& frames, mutex& mutex_frames)
 
 void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 {
+	milliseconds lastTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
+	Mat background;
+	bool backgroundFlag = false;
+	BackgroundSubtractorMOG2 bg(10, 64, false);
 	while (true)
 	{
 		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		capture >> frame;
 
-
 /*
-		Mat tmp, tmp1, tmp2;
+		Mat morph, tmp1, tmp2, morph_bin;
 		int morph_size = 1;
 		int size = 2 * morph_size + 1;
 		Mat element = getStructuringElement(MORPH_CROSS, Size(size, size), Point(-1,-1));
-		morphologyEx(frame, tmp, MORPH_GRADIENT, element);
-		cvtColor(tmp, tmp, CV_RGB2GRAY);
-		imshow("1", tmp);
-		threshold(tmp, tmp1, 20, 255, THRESH_BINARY);
-		imshow("2", tmp1);
+		morphologyEx(frame, morph, MORPH_GRADIENT, element);
+		cvtColor(morph, morph, CV_RGB2GRAY);
+		imshow("morph", morph);
+		threshold(morph, morph_bin, 25, 255, THRESH_BINARY);
+		imshow("threshold", morph_bin);
 */
 
-		bg(frame, mask, 0.01);
+		bg(frame, mask, 0.1);
+//		bg(morph_bin, mask, 0.1);
 		Mat temp;
 
 		const int niters = 3;
@@ -116,15 +120,12 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
 		allHulls.clear();
-		allContours.clear();
 		findContours(temp, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+//		findContours(mask, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
-/*
-		allHulls.clear();
-		findContours(tmp1, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-*/
 		if ((allContours.size() > 0)&(allContours.size()<2000))
 		{
+			lastTime = currentTime;
 			vector<Rect> rects;
 			for (auto contIter0 = allContours.begin(); contIter0 != allContours.end(); )
 			{
@@ -163,6 +164,15 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 			frames.push_back(forSave);
 			mutex_frames.unlock();
 		}
+/*
+		if ((currentTime.count() - lastTime.count()) > 1000)
+		{
+			cout << (currentTime.count() - lastTime.count())/1000 << endl;
+			backgroundFlag = true;
+			background = frame;
+			imshow("back", background);
+		}
+*/
 //		displayTime(frame);
 		display();
 		waitKey(20);
@@ -196,10 +206,10 @@ void Capture::display()
 		rectangle(frame, *i, Scalar(255, 0, 0), 1, 8, 0);
 		putText(frame, stringNumber, Point((*i).x + 5, (*i).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 	}
-	drawContours(frame, allHulls, -1, Scalar(0, 255, 0), 2);
-	//	drawContours(frame, allContours, -1, Scalar(255, 0, 0), 2);
-//	imshow("mask", mask);
-//	imshow("fgimg", fgimg);
+//	drawContours(frame, allHulls, -1, Scalar(0, 255, 0), 2);
+//	drawContours(frame, allContours, -1, Scalar(255, 0, 0), 2);
+	imshow("mask", mask);
+	imshow("fgimg", fgimg);
 	imshow("frame", frame);
 }
 

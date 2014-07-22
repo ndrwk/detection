@@ -10,7 +10,8 @@ using namespace chrono;
 
 class Capture
 {
-	const int MINRECTPERIMETR = 100;
+	const int MINRECTPERIMETR = 50;
+	const int MAXCONTS = 500;
 	VideoCapture capture;
 	Mat frame;
 	Mat mask;
@@ -24,7 +25,7 @@ class Capture
 
 	void display();
 	void displayTime(Mat);
-	void uniteRect(vector<Rect>);
+	vector<Rect> uniteRect(vector<vector<Point>>);
 
 
 public:

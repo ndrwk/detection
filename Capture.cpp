@@ -34,33 +34,41 @@ Mat Capture::getFrame()
 
 
 
-void Capture::uniteRect(vector<Rect> rects)
+vector<Rect> Capture::uniteRect(vector<vector<Point>> contours)
 {
-	Rect stub(1, 1, 1, 1);
-	for (vector<Rect>::iterator i = rects.begin(); i != rects.end(); i++)
+	vector<Rect> rects;
+	for (auto i = contours.begin(); i != contours.end(); i++)
 	{
-		for (vector<Rect>::iterator j = rects.begin(); j != rects.end(); j++)
+		rects.push_back(boundingRect(*i));
+	}
+	bool isCrossed = true;
+	Rect stub(1, 1, 1, 1);
+	while (isCrossed)
+	{
+		isCrossed = false;
+		for (auto i = rects.begin(); i != rects.end();)
 		{
-			if ((((*i & *j).width != 0)) && (i-rects.begin() != j-rects.begin()))
+			if (((*i).height + (*i).width) < MINRECTPERIMETR)
 			{
-				*i = *i | *j;
-				*j = stub;
+				i = rects.erase(i);
+			}
+			else
+			{
+				for (auto j = i; j != rects.end(); j++)
+				{
+					if (i == j) continue;
+					if ((*i & *j).width != 0)
+					{
+						*i = *i | *j;
+						*j = stub;
+						isCrossed = true;
+					}
+				}
+				i++;
 			}
 		}
 	}
-	for (vector<Rect>::iterator iter = rects.begin(); iter != rects.end();)
-	{
-		Rect tmp = *iter;
-		if ((tmp.height == 1)&(tmp.width == 1))
-		{
-			iter = rects.erase(iter);
-		}
-		else
-		{
-			iter++;
-		}
-	}
-
+	return rects;
 }
 
 void Capture::cut(vector<Frame>& frames, mutex& mutex_frames)
@@ -89,90 +97,29 @@ void Capture::cut(vector<Frame>& frames, mutex& mutex_frames)
 void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 {
 	milliseconds lastTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-	Mat background;
-	bool backgroundFlag = false;
-	BackgroundSubtractorMOG2 bg(10, 64, false);
+	BackgroundSubtractorMOG2 bg(10, 25, false);
+	vector<Vec4i> hierarchy;
 	while (true)
 	{
 		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
+
 		capture >> frame;
-
-/*
-		Mat morph, tmp1, tmp2, morph_bin;
-		int morph_size = 1;
-		int size = 2 * morph_size + 1;
-		Mat element = getStructuringElement(MORPH_CROSS, Size(size, size), Point(-1,-1));
-		morphologyEx(frame, morph, MORPH_GRADIENT, element);
-		cvtColor(morph, morph, CV_RGB2GRAY);
-		imshow("morph", morph);
-		threshold(morph, morph_bin, 25, 255, THRESH_BINARY);
-		imshow("threshold", morph_bin);
-*/
-
-		bg(frame, mask, 0.1);
-//		bg(morph_bin, mask, 0.1);
-		Mat temp;
-
-		const int niters = 3;
-		dilate(mask, temp, Mat(), Point(-1, -1), niters);
-		erode(temp, temp, Mat(), Point(-1, -1), niters * 2);
-		dilate(temp, temp, Mat(), Point(-1, -1), niters);
+		bg(frame, mask, -1);
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
-		allHulls.clear();
-		findContours(temp, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-//		findContours(mask, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+		Mat img;
+		fgimg.copyTo(img);
 
-		if ((allContours.size() > 0)&(allContours.size()<2000))
+		findContours(mask, allContours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_NONE);
+		if ((allContours.size() > 0) && (allContours.size() < MAXCONTS))
 		{
 			lastTime = currentTime;
-			vector<Rect> rects;
-			for (auto contIter0 = allContours.begin(); contIter0 != allContours.end(); )
-			{
-				vector<Point> contour = *contIter0;
-				vector<Point> hull;
-				if (contour.size() < MINRECTPERIMETR)
-				{
-					contIter0 = allContours.erase(contIter0);
-				}
-				else
-				{
-					convexHull(Mat(contour), hull, false);
-					allHulls.push_back(hull);
-					Rect rect = boundingRect(hull);
-					rects.push_back(rect);
-					//				rectangle(frame, rect, Scalar(0, 0, 255), 1, 8, 0);
-					contIter0++;
-				}
-			}
-			uniteRect(rects);
-			for (auto iter = rects.begin(); iter != rects.end();)
-			{
-				Rect tmpRect = *iter;
-				if (2*(tmpRect.width+tmpRect.height) < MINRECTPERIMETR)
-				{
-					iter = rects.erase(iter);
-				}
-				else
-				{
-					++iter;
-				}
-			}
-			allRects = rects;
+			allRects = uniteRect(allContours);
 			Frame forSave(currentTime, frame, allRects, fgimg, allContours);
 			mutex_frames.lock();
 			frames.push_back(forSave);
 			mutex_frames.unlock();
 		}
-/*
-		if ((currentTime.count() - lastTime.count()) > 1000)
-		{
-			cout << (currentTime.count() - lastTime.count())/1000 << endl;
-			backgroundFlag = true;
-			background = frame;
-			imshow("back", background);
-		}
-*/
 //		displayTime(frame);
 		display();
 		waitKey(20);
@@ -182,21 +129,6 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 
 void Capture::display()
 {
-/*
-	Mat tmp, tmp1, tmp2;
-	cvtColor(frame, tmp2, CV_RGB2GRAY);
-	int morph_elem = 0;
-	int morph_size = 1;
-	Mat element = getStructuringElement(morph_elem, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
-	morphologyEx(tmp2, tmp, MORPH_GRADIENT, element);
-	imshow("morph", tmp);
-	vector<vector<Point>> conts;
-	threshold(tmp, tmp1, 10, 255, THRESH_BINARY);
-//	findContours(tmp1, conts, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-//	drawContours(tmp1, conts, -1, Scalar(255, 0, 0), 2);
-	imshow("123", tmp1);
-*/
-
 	for (auto i = allRects.begin(); i != allRects.end(); i++)
 	{
 		int number = i - allRects.begin();
@@ -208,8 +140,8 @@ void Capture::display()
 	}
 //	drawContours(frame, allHulls, -1, Scalar(0, 255, 0), 2);
 //	drawContours(frame, allContours, -1, Scalar(255, 0, 0), 2);
-	imshow("mask", mask);
-	imshow("fgimg", fgimg);
+//	imshow("mask", mask);
+//	imshow("fgimg", fgimg);
 	imshow("frame", frame);
 }
 

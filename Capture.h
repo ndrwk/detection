@@ -1,5 +1,9 @@
 #pragma once
 #include <opencv2/opencv.hpp>
+#include "opencv2/video/tracking.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/video/background_segm.hpp"
 #include <mutex>
 #include <chrono>
 #include "Frame.h"
@@ -12,6 +16,8 @@ class Capture
 {
 	const int MINRECTPERIMETR = 50;
 	const int MAXCONTS = 500;
+	const int MAX_POINTS = 500;
+
 	VideoCapture capture;
 	Mat frame;
 	Mat mask;
@@ -21,6 +27,7 @@ class Capture
 	vector<Rect> allRects;
 	milliseconds currentTime;
 	const int timeRange = 2000; // in milliseconds
+	bool initFindPoint;
 
 
 	void display();

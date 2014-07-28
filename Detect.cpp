@@ -25,6 +25,7 @@ void Detect::detectOnContours(vector<Frame>& frames, mutex& mutex_frames)
 	while (true)
 	{
 
+/*
 		mutex_frames.lock();
 		copy_frames = frames;
 		mutex_frames.unlock();
@@ -57,6 +58,7 @@ void Detect::detectOnContours(vector<Frame>& frames, mutex& mutex_frames)
 				}
 			}
 		}
+*/
 		waitKey(20);
 	}
 }

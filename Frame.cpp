@@ -1,13 +1,12 @@
 #include "Frame.h"
 
 
-Frame::Frame(chrono::milliseconds time, Mat mat, vector<Rect> rects, Mat mat2, vector<Point2f> all_points)
+Frame::Frame(chrono::milliseconds time, Mat mat, vector<Rect> rects, Mat mat2)
 {
 	timeStamp = time;
 	img = mat;
 	fgimg = mat2;
 	allRects = rects;
-	allPoints = all_points;
 }
 
 

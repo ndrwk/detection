@@ -16,7 +16,7 @@ class Frame
 //	vector <vector<Point>> allContours;
 
 public:
-	Frame(chrono::milliseconds, Mat, vector<Rect>, Mat, vector<Point2f>);
+	Frame(chrono::milliseconds, Mat, vector<Rect>, Mat);
 	~Frame();
 	long long getTime();
 	Mat getImg();

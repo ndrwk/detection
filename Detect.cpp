@@ -4,6 +4,9 @@
 #include <opencv2/stitching/stitcher.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <thread>
+#include <chrono>
+#include "Vortex.h"
+#include "RectStruct.h"
 
 using namespace std;
 using namespace cv;
@@ -19,103 +22,198 @@ Detect::~Detect()
 
 
 
-void Detect::detectOnContours(vector<Frame>& frames, mutex& mutex_frames)
+void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 {
-	vector<Frame> copy_frames;
+	bool need2Init = true;
+	vector<Point2f> pointsNow, pointsPrev;
+	vector<RectStruct> rectsStPrev, rectsStNow;
+	vector<uchar> status;
+	vector<float> err;
+	TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
+	Size subPixWinSize(10, 10), winSize(31, 31);
+
 	while (true)
 	{
-
-/*
-		mutex_frames.lock();
-		copy_frames = frames;
-		mutex_frames.unlock();
-		for (vector<Frame>::iterator iter = copy_frames.begin(); iter != copy_frames.end(); iter++)
+		if (frames.size() > 5)
 		{
-			Frame frame = *iter;
-			vector<vector<Point>> contours;
-			contours = frame.getContours();
-
-			for (vector<vector<Point>>::iterator iterC = contours.begin(); iterC != contours.end(); iterC++)
+			mutex_frames.lock();
+			auto it = frames.end() - 1;
+			vector<Rect> rectsNow = (*it).getRects();
+			Mat imgNow = (*it).getImg();
+			it--;
+//			vector<Rect> rectsPrev = (*it).getRects();
+			Mat imgPrev = (*it).getImg();
+			mutex_frames.unlock();
+			Mat grayNow, grayPrev;
+			cvtColor(imgNow, grayNow, COLOR_BGR2GRAY);
+			cvtColor(imgPrev, grayPrev, COLOR_BGR2GRAY);
+			if (need2Init)
 			{
-				vector<Point> cont = *iterC;
-				int counter = 0;
-				for (vector<Frame>::iterator iterI = copy_frames.begin(); iterI != copy_frames.end(); iterI++)
+
+				pointsNow.clear();
+				pointsPrev.clear();
+				rectsStPrev.clear();
+				rectsStNow.clear();
+				goodFeaturesToTrack(grayNow, pointsNow, 500, 0.01, 10, Mat(), 3, 0, 0.04);
+				need2Init = false;
+				for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
 				{
-					vector<vector<Point>> contsI = (*iterI).getContours();
-					for (vector<vector<Point>>::iterator iterJ = contsI.begin(); iterJ != contsI.end(); iterJ++)
+					int number = r - rectsNow.begin();
+					Rect rect = *r;
+					set<int> pointNums;
+					for (int i = 0; i != pointsNow.size(); i++)
 					{
-						double match = matchShapes(cont, *iterJ, CV_CONTOURS_MATCH_I1, 0);
-						if ((match < 0.2)&((iter-copy_frames.begin())==(iterI-copy_frames.begin()))) counter++;
+						Point2f point = pointsNow[i];
+						if ((point.x >= rect.x) && (point.x <= (rect.x + rect.width)) && (point.y >= rect.y) && (point.y <= (rect.y + rect.height)))
+						{
+							pointNums.insert(i);
+						}
 					}
-				}
-//				cout << counter << endl;
-				if (counter>1)
-				{
-					Mat pic = frame.getFgimg();
-					Rect rect = boundingRect(cont);
-					rectangle(pic, rect, Scalar(0, 255, 0), 3, 8, 0);
-					display(pic);
+					RectStruct rs(number, rect, pointNums);
+					rectsStNow.push_back(rs);
 				}
 			}
+			else
+			{
+				if (!pointsPrev.empty())
+				{
+					calcOpticalFlowPyrLK(grayPrev, grayNow, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
+					for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
+					{
+						Rect rect = *r;
+						set<int> pointNums;
+						int number = 99;
+						for (int i = 0; i != pointsNow.size(); i++)
+						{
+							Point2f point = pointsNow[i];
+							if ((point.x >= rect.x) && (point.x <= (rect.x + rect.width)) && (point.y >= rect.y) && (point.y <= (rect.y + rect.height)))
+							{
+								pointNums.insert(i);
+								for (auto j = rectsStPrev.begin(); j != rectsStPrev.end();j++)
+								{
+									set<int> sI = (*j).getSetOfPoints();
+									auto it = sI.find(i);
+//									if (it != (*j).getSetOfPoints().end())
+									if (it != sI.end())
+									{
+										number = (*j).getNumber();
+										break;
+									}
+								}
+							}
+							else
+							{
+								//потом
+							}
+						}
+						RectStruct rs(number, rect, pointNums);
+						rectsStNow.push_back(rs);
+					}
+
+
+
+
+					for (int i = 0; i < pointsNow.size(); i++)
+					{
+						line(imgNow, pointsPrev[i], pointsNow[i], Scalar(255, 255, 0));
+					}
+
+					for (auto jj = rectsStNow.begin(); jj != rectsStNow.end(); jj++)
+					{
+						Rect r = (*jj).getRect();
+						int number = (*jj).getNumber();
+						rectangle(imgNow, r, Scalar(0, 0, 255));
+						stringstream ss;
+						ss << number;
+						string stringNumber = ss.str();
+						putText(imgNow, stringNumber, Point(r.x + 5, r.y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+
+					}
+
+
+
+
+
+				}
+				imshow("points", imgNow);
+			}
+			swap(pointsNow, pointsPrev);
+			swap(rectsStNow, rectsStPrev);
+			rectsStNow.clear();
 		}
-*/
 		waitKey(20);
 	}
 }
 
-void Detect::detectOnRects(vector<Frame>& frames, mutex& mutex_frames)
+
+void Detect::display(vector<Frame>& frames, mutex& mutex_frames)
 {
-	vector<Frame> copy_frames;
 	while (true)
 	{
-
-		mutex_frames.lock();
-		copy_frames = frames;
-		mutex_frames.unlock();
-		for (vector<Frame>::iterator iter = copy_frames.begin(); iter != copy_frames.end(); iter++)
+		if (!frames.empty())
 		{
+			mutex_frames.lock();
+			auto iter = frames.end()-1;
 			vector<Rect> rects = (*iter).getRects();
-			Mat pic = (*iter).getImg();
-			cvtColor(pic, pic, CV_BGR2GRAY);
-			for (vector<Rect>::iterator iterC = rects.begin(); iterC != rects.end(); iterC++)
+			Mat img = (*iter).getImg();
+			long long time = (*iter).getTime();
+			mutex_frames.unlock();
+			for (auto r = rects.begin(); r != rects.end(); r++)
 			{
-				Rect bondRect = *iterC;
-				Mat boundedPic = pic(bondRect);
-				Mat edges;
-//				threshold(boundedPic, boundedPic, 25, 255, CV_THRESH_BINARY);
-				Canny(boundedPic, edges, 5, 200, 3);
-				int counter = 0;
-//				edges.copyTo(boundedPic,pic);
-/*
-				for (vector<Frame>::iterator iterI = copy_frames.begin(); iterI != copy_frames.end(); iterI++)
-				{
-					vector<vector<Point>> contsI = (*iterI).getContours();
-					for (vector<vector<Point>>::iterator iterJ = contsI.begin(); iterJ != contsI.end(); iterJ++)
-					{
-						double match = matchShapes(cont, *iterJ, CV_CONTOURS_MATCH_I1, 0);
-						if ((match < 0.2)&((iter - copy_frames.begin()) == (iterI - copy_frames.begin()))) counter++;
-					}
-				}
-				//				cout << counter << endl;
-				if (counter>1)
-				{
-					Mat pic = frame.getFgimg();
-					Rect rect = boundingRect(cont);
-					rectangle(pic, rect, Scalar(0, 255, 0), 3, 8, 0);
-					display(pic);
-				}
-*/
+				int number = r - rects.begin();
+				stringstream ss;
+				ss << number;
+				string stringNumber = ss.str();
+				rectangle(img, *r, Scalar(255, 0, 0), 1, 8, 0);
+				putText(img, stringNumber, Point((*r).x + 5, (*r).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 			}
-			imshow("123", pic);
+			//			putText(img, ctime(&time), Point(20, img.rows - 40), FONT_HERSHEY_COMPLEX, 1, Scalar::all(255), 1, 8);
 
+			imshow("img", img);
+			waitKey(20);
 		}
-		waitKey(20);
+	}
+
+
+
+
+
+}
+
+
+/*
+sort(vortexes.begin(), vortexes.end(), Vortex::cmpByAngle);
+vector<vector<Vortex>> fragments;
+vector<Vortex> region;
+
+auto i = vortexes.begin();
+region.push_back(*i);
+i++;
+for (; i != vortexes.end(); i++)
+{
+	if ((*i).getAngle() == (*(i - 1)).getAngle())
+	{
+		region.push_back(*i);
+	}
+	else
+	{
+		fragments.push_back(region);
+		region.clear();
+		region.push_back(*i);
 	}
 }
+fragments.push_back(region);
+const Scalar colors[13] = { BLACK, WHITE, RED, ORANGE, YELLOW, GREEN, LIGHTBLUE, BLUE, VIOLET, GINGER, PINK, LIGHTGREEN, BROWN };
 
-void Detect::display(Mat pic)
+int c = 0;
+for (auto i = fragments.begin(); i != fragments.end(); i++)
 {
-	imshow("pic", pic);
+	vector<Vortex> reg = *i;
+	for (auto j = reg.begin(); j != reg.end(); j++)
+	{
+		Point2f point = (*j).getP1();
+		circle(imgNow, point, 3, colors[c], -1);
+	}
+	c++;
 }
-
-
+*/

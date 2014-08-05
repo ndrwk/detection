@@ -19,18 +19,18 @@ class Capture
 	const int MAX_POINTS = 500;
 
 	VideoCapture capture;
-	Mat frame;
-	Mat mask;
-	Mat fgimg;
-	vector<vector<Point>> allContours;
-	vector<vector<Point>> allHulls;
+//	Mat frame;
+//	Mat mask;
+//	Mat fgimg;
+//	vector<vector<Point>> allContours;
+//	vector<vector<Point>> allHulls;
 	vector<Rect> allRects;
 	milliseconds currentTime;
 	const int timeRange = 2000; // in milliseconds
 	bool initFindPoint;
 
 
-	void display();
+	void display(Mat);
 	void displayTime(Mat);
 	vector<Rect> uniteRect(vector<vector<Point>>);
 

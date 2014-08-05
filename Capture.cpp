@@ -31,7 +31,8 @@ bool Capture::isOpened()
 
 Mat Capture::getFrame()
 {
-	return frame;
+	Mat m;
+	return m;
 }
 
 
@@ -104,54 +105,32 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 	vector<Point2f> pointsPrev, pointsNow;
 	TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
 	Size subPixWinSize(10, 10), winSize(31, 31);
-
 	while (true)
 	{
 		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-
+		Mat frame, mask, fgimg;
 		capture >> frame;
 		bg(frame, mask, -1);
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
-		Mat gray, prevGray;
-		cvtColor(fgimg, gray, COLOR_BGR2GRAY);
-
+		vector<vector<Point>> allContours;
 		findContours(mask, allContours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_NONE);
 		if ((allContours.size() > 0) && (allContours.size() < MAXCONTS))
 		{
-			if (initFindPoint)
-			{
-				goodFeaturesToTrack(gray, pointsNow, MAX_POINTS, 0.01, 10, Mat(), 3, 0, 0.04);
-				initFindPoint = false;
-			}
-			else
-			{
-				if (!pointsPrev.empty())
-				{
-					vector<uchar> status;
-					vector<float> err;
-					if (prevGray.empty()) gray.copyTo(prevGray);
-					calcOpticalFlowPyrLK(prevGray, gray, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
-				}
-			}
 			lastTime = currentTime;
+			allRects.clear();
 			allRects = uniteRect(allContours);
-			Frame forSave(currentTime, frame, allRects, fgimg, pointsNow);
+			Frame forSave(currentTime, frame, allRects, fgimg);
 			mutex_frames.lock();
 			frames.push_back(forSave);
 			mutex_frames.unlock();
 		}
-//		displayTime(frame);
-		std::swap(pointsNow, pointsPrev);
-		cv::swap(prevGray, gray);
-
-		display();
 		waitKey(20);
 	}
 }
 
 
-void Capture::display()
+void Capture::display(Mat frame)
 {
 	for (auto i = allRects.begin(); i != allRects.end(); i++)
 	{
@@ -162,10 +141,6 @@ void Capture::display()
 		rectangle(frame, *i, Scalar(255, 0, 0), 1, 8, 0);
 		putText(frame, stringNumber, Point((*i).x + 5, (*i).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 	}
-//	drawContours(frame, allHulls, -1, Scalar(0, 255, 0), 2);
-//	drawContours(frame, allContours, -1, Scalar(255, 0, 0), 2);
-//	imshow("mask", mask);
-//	imshow("fgimg", fgimg);
 	imshow("frame", frame);
 }
 

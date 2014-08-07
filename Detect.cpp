@@ -26,7 +26,7 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 {
 	bool need2Init = true;
 	vector<Point2f> pointsNow, pointsPrev;
-	vector<RectStruct> rectsStPrev, rectsStNow;
+	vector <int> rStPrev(MAXCORNERS),rStNow(MAXCORNERS);
 	vector<uchar> status;
 	vector<float> err;
 	TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
@@ -41,7 +41,6 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 			vector<Rect> rectsNow = (*it).getRects();
 			Mat imgNow = (*it).getImg();
 			it--;
-//			vector<Rect> rectsPrev = (*it).getRects();
 			Mat imgPrev = (*it).getImg();
 			mutex_frames.unlock();
 			Mat grayNow, grayPrev;
@@ -49,28 +48,26 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 			cvtColor(imgPrev, grayPrev, COLOR_BGR2GRAY);
 			if (need2Init)
 			{
-
 				pointsNow.clear();
 				pointsPrev.clear();
-				rectsStPrev.clear();
-				rectsStNow.clear();
-				goodFeaturesToTrack(grayNow, pointsNow, 500, 0.01, 10, Mat(), 3, 0, 0.04);
+				rStPrev.clear();
+				rStPrev.reserve(MAXCORNERS);
+				goodFeaturesToTrack(grayNow, pointsNow, MAXCORNERS, 0.01, 10, Mat(), 3, 0, 0.04);
 				need2Init = false;
-				for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
+				for (int i = 0; i != pointsNow.size(); i++)
 				{
-					int number = r - rectsNow.begin();
-					Rect rect = *r;
-					set<int> pointNums;
-					for (int i = 0; i != pointsNow.size(); i++)
+					Point2f point = pointsNow[i];
+					int rNumber = -1;
+					for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
 					{
-						Point2f point = pointsNow[i];
+						Rect rect = *r;
 						if ((point.x >= rect.x) && (point.x <= (rect.x + rect.width)) && (point.y >= rect.y) && (point.y <= (rect.y + rect.height)))
 						{
-							pointNums.insert(i);
+							rNumber = r - rectsNow.begin();
+
 						}
 					}
-					RectStruct rs(number, rect, pointNums);
-					rectsStNow.push_back(rs);
+					rStNow[i] = rNumber;
 				}
 			}
 			else
@@ -78,37 +75,15 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 				if (!pointsPrev.empty())
 				{
 					calcOpticalFlowPyrLK(grayPrev, grayNow, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
-					for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
+					int count = 0;
+					for (int i = 0; i != pointsNow.size(); i++)
 					{
-						Rect rect = *r;
-						set<int> pointNums;
-						int number = 99;
-						for (int i = 0; i != pointsNow.size(); i++)
-						{
-							Point2f point = pointsNow[i];
-							if ((point.x >= rect.x) && (point.x <= (rect.x + rect.width)) && (point.y >= rect.y) && (point.y <= (rect.y + rect.height)))
-							{
-								pointNums.insert(i);
-								for (auto j = rectsStPrev.begin(); j != rectsStPrev.end();j++)
-								{
-									set<int> sI = (*j).getSetOfPoints();
-									auto it = sI.find(i);
-//									if (it != (*j).getSetOfPoints().end())
-									if (it != sI.end())
-									{
-										number = (*j).getNumber();
-										break;
-									}
-								}
-							}
-							else
-							{
-								//потом
-							}
-						}
-						RectStruct rs(number, rect, pointNums);
-						rectsStNow.push_back(rs);
+						int xMin = grayNow.cols;
+						int xMax = 0;
+						int yMin = grayNow.rows;
+						int yMax = 0;
 					}
+					if (count>1) need2Init = true;
 
 
 
@@ -118,6 +93,7 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 						line(imgNow, pointsPrev[i], pointsNow[i], Scalar(255, 255, 0));
 					}
 
+/*
 					for (auto jj = rectsStNow.begin(); jj != rectsStNow.end(); jj++)
 					{
 						Rect r = (*jj).getRect();
@@ -129,6 +105,7 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 						putText(imgNow, stringNumber, Point(r.x + 5, r.y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 
 					}
+*/
 
 
 
@@ -138,8 +115,7 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 				imshow("points", imgNow);
 			}
 			swap(pointsNow, pointsPrev);
-			swap(rectsStNow, rectsStPrev);
-			rectsStNow.clear();
+			swap(rStNow, rStPrev);
 		}
 		waitKey(20);
 	}

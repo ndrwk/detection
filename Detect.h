@@ -12,6 +12,7 @@ using namespace cv;
 using namespace std;
 using namespace chrono;
 
+
 class Detect
 {
 	const Scalar BLACK = CV_RGB(0, 0, 0);
@@ -27,6 +28,8 @@ class Detect
 	const Scalar PINK = CV_RGB(255, 192, 203);
 	const Scalar LIGHTGREEN = CV_RGB(153, 255, 153);
 	const Scalar BROWN = CV_RGB(150, 75, 0);
+
+	const int MAXCORNERS = 500;
 
 	float Detect::getVortex(float, float);
 	float Detect::getAngle(float, float);

@@ -26,7 +26,9 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 {
 	bool need2Init = true;
 	vector<Point2f> pointsNow, pointsPrev;
-	vector <int> rStPrev(MAXCORNERS),rStNow(MAXCORNERS);
+//	vector <int> rStPrev(MAXCORNERS),rStNow(MAXCORNERS);
+	vector<set<int>> rSets;
+//	vector<Rect> rects;
 	vector<uchar> status;
 	vector<float> err;
 	TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
@@ -50,25 +52,26 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 			{
 				pointsNow.clear();
 				pointsPrev.clear();
-				rStPrev.clear();
-				rStPrev.reserve(MAXCORNERS);
+				rSets.clear();
 				goodFeaturesToTrack(grayNow, pointsNow, MAXCORNERS, 0.01, 10, Mat(), 3, 0, 0.04);
 				need2Init = false;
-				for (int i = 0; i != pointsNow.size(); i++)
+				for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
 				{
-					Point2f point = pointsNow[i];
-					int rNumber = -1;
-					for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
+					Rect rect = *r;
+					set<int> rSet;
+					for (auto p = pointsNow.begin(); p != pointsNow.end();p++)
 					{
-						Rect rect = *r;
+						Point2f point = *p;
 						if ((point.x >= rect.x) && (point.x <= (rect.x + rect.width)) && (point.y >= rect.y) && (point.y <= (rect.y + rect.height)))
 						{
-							rNumber = r - rectsNow.begin();
-
+							int i = p - pointsNow.begin();
+							rSet.insert(i);
 						}
 					}
-					rStNow[i] = rNumber;
+					rSets.push_back(rSet);
+
 				}
+				cout << "init" << endl;
 			}
 			else
 			{
@@ -76,22 +79,55 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 				{
 					calcOpticalFlowPyrLK(grayPrev, grayNow, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
 					int count = 0;
-					for (int i = 0; i != pointsNow.size(); i++)
+					for (auto r = rSets.begin(); r != rSets.end(); r++)
 					{
+						set<int> rSet = *r;
 						int xMin = grayNow.cols;
 						int xMax = 0;
 						int yMin = grayNow.rows;
 						int yMax = 0;
+						int number = r - rSets.begin();
+						for (auto s = rSet.begin(); s != rSet.end(); s++)
+						{
+							int num = *s;
+							Point2f point = pointsNow[num];
+							if (point.x < xMin) xMin = (int) point.x;
+							if (point.x > xMax) xMax = (int) point.x;
+							if (point.y < yMin) yMin = (int) point.y;
+							if (point.y > yMax) yMax = (int) point.y;
+						}
+						Rect rect(Point(xMin, yMin), Point(xMax, yMax));
+//						rectangle(imgNow, rect, Scalar(0, 255, 0));
+
+						for (auto rn = rectsNow.begin(); rn != rectsNow.end(); rn++)
+						{
+	//						rectangle(imgNow, *rn, Scalar(255, 0, 0));
+							bool fl = true;
+							if ((rect & *rn).width != 0)
+							{
+								rect = rect | *rn;
+									fl = false;
+							}
+							if (fl) count++;
+						}
+						rectangle(imgNow, rect, Scalar(0, 0, 255));
+						stringstream ss;
+						ss << number;
+						string stringNumber = ss.str();
+						putText(imgNow, stringNumber, Point(rect.x + 5, rect.y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+
 					}
-					if (count>1) need2Init = true;
+					if (count>3) need2Init = true;
 
 
 
 
+/*
 					for (int i = 0; i < pointsNow.size(); i++)
 					{
 						line(imgNow, pointsPrev[i], pointsNow[i], Scalar(255, 255, 0));
 					}
+*/
 
 /*
 					for (auto jj = rectsStNow.begin(); jj != rectsStNow.end(); jj++)
@@ -115,7 +151,7 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 				imshow("points", imgNow);
 			}
 			swap(pointsNow, pointsPrev);
-			swap(rStNow, rStPrev);
+//			swap(rSetsNow, rSetsPrev);
 		}
 		waitKey(20);
 	}

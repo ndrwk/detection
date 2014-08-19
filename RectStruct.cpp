@@ -1,14 +1,14 @@
 #include "RectStruct.h"
 
 
-RectStruct::RectStruct(int n, Rect rn, set<int> p)
+RectStruct::RectStruct(int n, Rect rn, vector<Point2f> p)
 {
 	rectNow = rn;
 	number = n;
 	points = p;
 }
 
-set<int> RectStruct::getSetOfPoints()
+vector<Point2f> RectStruct::getSetOfPoints()
 {
 	return points;
 }

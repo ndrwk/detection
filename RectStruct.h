@@ -9,10 +9,11 @@ class RectStruct
 {
 	int number;
 	Rect rectNow;
-	set<int> points;
+	vector<Point2f> points;
 public:
-	RectStruct(int, Rect, set<int>);
-	set<int> getSetOfPoints();
+//	RectStruct(int, Rect, set<int>);
+	RectStruct(int, Rect, vector<Point2f>);
+	vector<Point2f> getSetOfPoints();
 	int getNumber();
 	Rect getRect();
 //	RectStruct();

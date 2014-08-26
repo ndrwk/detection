@@ -50,6 +50,8 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 			Mat grayNow, grayPrev;
 			cvtColor(imgNow, grayNow, COLOR_BGR2GRAY);
 			cvtColor(imgPrev, grayPrev, COLOR_BGR2GRAY);
+			rstrctsNow.clear();
+
 			if (need2Init)
 			{
 				if (!rstrctsPrev.empty())
@@ -74,27 +76,32 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 						}
 
 						Rect rect(Point(xMin, yMin), Point(xMax, yMax));
+						bool f = false;
 						for (auto rn = rectsNow.begin(); rn != rectsNow.end(); )
 						{
 							if ((rect & *rn).width != 0)
 							{
 								rect = rect | *rn;
 								rn = rectsNow.erase(rn);
+								f = true;
 							}
 							else
 							{
 								rn++;
 							}
 						}
-						RectStruct rs(number, rect, pNow);
-						rstrctsNow.push_back(rs);
+						if (f)
+						{
+							RectStruct rs(number, rect, pNow);
+							rstrctsNow.push_back(rs);
+						}
 					}
 					ofset = rstrctsNow.size();
 				}
 				else
 				{
-					rstrctsNow.clear();
-					rstrctsPrev.clear();
+//					rstrctsNow.clear();
+//					rstrctsPrev.clear();
 					ofset = 0;
 				}
 				pointsNow.clear();
@@ -165,7 +172,7 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 						string stringNumber = ss.str();
 						putText(imgNow, stringNumber, Point(rect.x + 5, rect.y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 					}
-					if (count>5) need2Init = true;
+					if (count>0) need2Init = true;
 
 
 

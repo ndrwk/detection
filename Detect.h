@@ -38,6 +38,7 @@ public:
 	Detect();
 	~Detect();
 	void Detect::detectPoints(vector<Frame>&, mutex&);
+	void Detect::d_etectPoints(vector<Frame>&, mutex&);
 	void Detect::display(vector<Frame>&, mutex&);
 
 };

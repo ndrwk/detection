@@ -120,6 +120,14 @@ void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
 			lastTime = currentTime;
 			allRects.clear();
 			allRects = uniteRect(allContours);
+			for (auto i = allRects.begin(); i != allRects.end(); i++)
+			{
+				Rect r = *i;
+				circle(fgimg, Point2f(r.x+2, r.y+2), 0, Scalar::all(255), -1);
+				circle(fgimg, Point2f(r.x+r.width-2, r.y+2), 0, Scalar::all(255), -1);
+				circle(fgimg, Point2f(r.x+r.width-2, r.y+r.height-2), 0, Scalar::all(255), -1);
+				circle(fgimg, Point2f(r.x+2, r.y+r.height-2), 0, Scalar::all(255), -1);
+			}
 			Frame forSave(currentTime, frame, allRects, fgimg);
 			mutex_frames.lock();
 			frames.push_back(forSave);

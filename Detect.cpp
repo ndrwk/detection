@@ -22,119 +22,6 @@ Detect::~Detect()
 
 
 
-void Detect::d_etectPoints(vector<Frame>& frames, mutex& mutex_frames)
-{
-	bool need2Init = true;
-	vector<Point2f> pointsNow, pointsPrev;
-//	vector<set<int>> rSets;
-	vector<uchar> status;
-	vector<float> err;
-//	vector<Rect> rcts;
-	vector<RectStruct> rstrctsNow, rstrctsPrev;
-	TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
-	Size subPixWinSize(10, 10), winSize(31, 31);
-	int ofset = 0;
-
-	while (true)
-	{
-		if (frames.size() > 6)
-		{
-			mutex_frames.lock();
-			auto it = frames.end() - 1;
-			vector<Rect> rectsNow = (*it).getRects();
-			Mat imgNow = (*it).getFgimg();
-			it--;
-			Mat imgPrev = (*it).getFgimg();
-			vector<Rect> rectsPrev = (*it).getRects();
-			mutex_frames.unlock();
-			Mat grayNow, grayPrev;
-			cvtColor(imgNow, grayNow, COLOR_BGR2GRAY);
-			cvtColor(imgPrev, grayPrev, COLOR_BGR2GRAY);
-			rstrctsNow.clear();
-
-			if (need2Init)
-			{
-				for (auto r = rectsNow.begin(); r != rectsNow.end(); r++)
-				{
-					Rect rect = *r;
-					vector<Point2f> points;
-					int n = r - rectsNow.begin();
-					int num = ofset + n;
-					Mat mask(grayNow.size(), CV_8UC1);
-					mask.setTo(Scalar::all(0));
-					rectangle(mask, rect, Scalar::all(255), -1);
-					goodFeaturesToTrack(grayNow, points, MAXCORNERS, 0.01, 10, mask, 3, 0, 0.04);
-					RectStruct rs(num, rect, points);
-					rstrctsNow.push_back(rs);
-				}
-				cout << "init" << endl;
-				need2Init = false;
-
-			}
-			else
-			{
-				int count = 0;
-				for (auto r = rstrctsPrev.begin(); r != rstrctsPrev.end(); r++)
-				{
-					vector<Point2f> pPrev = (*r).getSetOfPoints();
-					vector<Point2f> pNow;
-					int number = (*r).getNumber();
-					calcOpticalFlowPyrLK(grayPrev, grayNow, pPrev, pNow, status, err, winSize, 3, termcrit, 0, 0.001);
-					int xMin = grayNow.cols;
-					int xMax = 0;
-					int yMin = grayNow.rows;
-					int yMax = 0;
-					for (auto s = pNow.begin(); s != pNow.end(); s++)
-					{
-						Point2f point = *s;
-						if (point.x < xMin) xMin = (int)point.x;
-						if (point.x > xMax) xMax = (int)point.x;
-						if (point.y < yMin) yMin = (int)point.y;
-						if (point.y > yMax) yMax = (int)point.y;
-					}
-
-					Rect rect(Point(xMin, yMin), Point(xMax, yMax));
-					Rect rtmp;
-
-					for (auto rn = rectsNow.begin(); rn != rectsNow.end(); rn++)
-					{
-						if ((rect & *rn).width != 0) rtmp = *rn;
-						else count++;
-					}
-
-					RectStruct rs(number, rtmp, pNow);
-					rstrctsNow.push_back(rs);
-
-					//						rcts.push_back(rect);
-					rectangle(imgNow, rect, Scalar(0, 0, 255));
-					stringstream ss;
-					ss << number;
-					string stringNumber = ss.str();
-					putText(imgNow, stringNumber, Point(rect.x + 5, rect.y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
-				}
-//				if (count > 0) need2Init = true;
-
-
-
-
-				/*
-									for (int i = 0; i < pointsNow.size(); i++)
-									{
-									line(imgNow, pointsPrev[i], pointsNow[i], Scalar(255, 255, 0));
-									}
-									*/
-
-
-			imshow("points", imgNow);
-			}
-			
-			swap(pointsNow, pointsPrev);
-			swap(rstrctsNow, rstrctsPrev);
-//			swap(rSetsNow, rSetsPrev);
-		}
-		waitKey(20);
-	}
-}
 
 
 void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
@@ -148,7 +35,6 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 	vector<RectStruct> rstrctsNow, rstrctsPrev;
 	TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
 	Size subPixWinSize(10, 10), winSize(31, 31);
-	int ofset = 0;
 
 	while (true)
 	{
@@ -166,34 +52,75 @@ void Detect::detectPoints(vector<Frame>& frames, mutex& mutex_frames)
 			cvtColor(imgNow, grayNow, COLOR_BGR2GRAY);
 			cvtColor(imgPrev, grayPrev, COLOR_BGR2GRAY);
 			rstrctsNow.clear();
-			vector<Point2f> reperPointsPrev, reperPointsNow;
-			for (auto i = rectsPrev.begin(); i != rectsPrev.end(); i++)
+			if (need2Init)
 			{
-				Rect r = *i;
-				reperPointsPrev.push_back(Point2f(r.x + 2, r.y + 2));
-				reperPointsPrev.push_back(Point2f(r.x + r.width - 2, r.y + 2));
-				reperPointsPrev.push_back(Point2f(r.x + r.width - 2, r.y + r.height - 2));
-				reperPointsPrev.push_back(Point2f(r.x + 2, r.y + r.height - 2));
+				for (auto r = rectsPrev.begin(); r != rectsPrev.end(); r++)
+				{
+					Rect rect = *r;
+					int number = r - rectsPrev.begin();
+					RectStruct rs(number, rect);
+					rstrctsNow.push_back(rs);
+				}
+				cout << "init  " << rstrctsNow.size() << endl;
+				need2Init = false;
 			}
-			calcOpticalFlowPyrLK(grayPrev, grayNow, reperPointsPrev, reperPointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
+			else
+			{
+				if (!rstrctsPrev.empty())
+				{
+					for (auto i = rstrctsPrev.begin(); i != rstrctsPrev.end();i++)
+					{
+						Rect r = (*i).getRect();
+						int number = (*i).getNumber();
+						vector<Point2f> reperPointsPrev, reperPointsNow;
+						reperPointsPrev.push_back(Point2f(r.x, r.y));
+						reperPointsPrev.push_back(Point2f(r.x + r.width, r.y + r.height));
+						calcOpticalFlowPyrLK(grayPrev, grayNow, reperPointsPrev, reperPointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
+						Rect rect(reperPointsNow[0], reperPointsNow[1]);
+						for (auto j = rectsNow.begin(); j != rectsNow.end();  )
+						{
+							Rect rtmp = *j;
+							if ((rtmp & rect).width == rect.width)
+							{
+								rstrctsNow.push_back(RectStruct(number, rect));
+								j = rectsNow.erase(j);
+							}
+							else
+							{
+								j++;
+							}
+						}
+						int ofset = rstrctsNow.size();
+						cout << "ofset" << ofset << endl;
+						for (auto k = rectsNow.begin(); k != rectsNow.end(); k++)
+						{
+							int num = k - rectsNow.begin();
+							Rect rect = *k;
+							rstrctsNow.push_back(RectStruct(ofset + num, rect));
+						}
+
+					}
+					for (auto i = rstrctsNow.begin(); i != rstrctsNow.end(); i++)
+					{
+						stringstream ss;
+						ss << (*i).getNumber();
+						string stringNumber = ss.str();
+						cout << stringNumber << endl;
+						putText(imgNow, stringNumber, Point((*i).getRect().x + 5, (*i).getRect().y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+
+						rectangle(imgNow, (*i).getRect(), Scalar(255, 0, 0));
+					}
+
+
+				}
+				else
+					need2Init = true;
 
 
 
-			for (auto i = reperPointsPrev.begin(); i != reperPointsPrev.end(); i++)
-			{
-				circle(imgNow, *i, 2, Scalar(255, 0, 0), -1);
+				imshow("points", imgNow);
 			}
-			for (auto i = reperPointsNow.begin(); i != reperPointsNow.end(); i++)
-			{
-				circle(imgNow, *i, 2, Scalar(0, 255, 0), -1);
-			}
-			for (auto i = rectsNow.begin(); i != rectsNow.end(); i++)
-			{
-
-				rectangle(imgNow, *i, Scalar(255, 0, 0));
-			}
-			imshow("points", imgNow);
-			
+			swap(rstrctsNow, rstrctsPrev);
 
 		}
 		waitKey(20);

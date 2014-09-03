@@ -1,6 +1,16 @@
 #include "RectStruct.h"
 
 
+RectStruct::RectStruct(int n, Rect rn)
+{
+	rectNow = rn;
+	number = n;
+}
+
+
+
+
+/*
 RectStruct::RectStruct(int n, Rect rn, vector<Point2f> p)
 {
 	rectNow = rn;
@@ -12,6 +22,7 @@ vector<Point2f> RectStruct::getSetOfPoints()
 {
 	return points;
 }
+*/
 
 int RectStruct::getNumber()
 {

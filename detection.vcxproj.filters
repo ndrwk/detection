@@ -39,7 +39,7 @@
     <ClCompile Include="RectStruct.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Vortex.cpp">
+    <ClCompile Include="TrackPoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,7 +65,7 @@
     <ClInclude Include="RectStruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vortex.h">
+    <ClInclude Include="TrackPoint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

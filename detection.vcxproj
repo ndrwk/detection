@@ -92,7 +92,7 @@
     <ClCompile Include="Frame.cpp" />
     <ClCompile Include="PicLoader.cpp" />
     <ClCompile Include="RectStruct.cpp" />
-    <ClCompile Include="Vortex.cpp" />
+    <ClCompile Include="TrackPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture.h" />
@@ -102,7 +102,7 @@
     <ClInclude Include="Frame.h" />
     <ClInclude Include="PicLoader.h" />
     <ClInclude Include="RectStruct.h" />
-    <ClInclude Include="Vortex.h" />
+    <ClInclude Include="TrackPoint.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

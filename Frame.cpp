@@ -1,12 +1,11 @@
 #include "Frame.h"
 
 
-Frame::Frame(chrono::milliseconds time, Mat mat, vector<Rect> rects, Mat mat2)
+Frame::Frame(chrono::milliseconds time, Mat pic, Mat picMask)
 {
 	timeStamp = time;
-	img = mat;
-	fgimg = mat2;
-	allRects = rects;
+	img = pic;
+	mask = picMask;
 }
 
 
@@ -26,17 +25,7 @@ Mat Frame::getImg()
 	return img;
 }
 
-Mat Frame::getFgimg()
+Mat Frame::getMask()
 {
-	return fgimg;
-}
-
-vector<Rect> Frame::getRects()
-{
-	return allRects;
-}
-
-vector<Point2f> Frame::getPoints()
-{
-	return allPoints;
+	return mask;
 }

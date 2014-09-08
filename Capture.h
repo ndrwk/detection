@@ -7,6 +7,7 @@
 #include <mutex>
 #include <chrono>
 #include "Frame.h"
+#include "TrackPoint.h"
 
 using namespace cv;
 using namespace std;
@@ -19,18 +20,13 @@ class Capture
 	const int MAX_POINTS = 500;
 
 	VideoCapture capture;
-//	Mat frame;
-//	Mat mask;
-//	Mat fgimg;
-//	vector<vector<Point>> allContours;
-//	vector<vector<Point>> allHulls;
-	vector<Rect> allRects;
 	milliseconds currentTime;
+	vector<TrackPoint> tracks;
 	const int timeRange = 2000; // in milliseconds
 	bool initFindPoint;
 
 
-	void display(Mat);
+	void display(Mat, vector<Rect> allRects);
 	void displayTime(Mat);
 	vector<Rect> uniteRect(vector<vector<Point>>);
 

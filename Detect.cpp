@@ -5,7 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <thread>
 #include <chrono>
-#include "RectStruct.h"
+#include "ContStruct.h"
 
 using namespace std;
 using namespace cv;

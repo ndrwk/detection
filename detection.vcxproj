@@ -86,22 +86,16 @@
   <ItemGroup>
     <ClCompile Include="Capture.cpp" />
     <ClCompile Include="Detect.cpp" />
-    <ClCompile Include="FileReader.cpp" />
-    <ClCompile Include="FolderReader.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Frame.cpp" />
-    <ClCompile Include="PicLoader.cpp" />
-    <ClCompile Include="RectStruct.cpp" />
+    <ClCompile Include="ContStruct.cpp" />
     <ClCompile Include="TrackPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture.h" />
     <ClInclude Include="Detect.h" />
-    <ClInclude Include="FileReader.h" />
-    <ClInclude Include="FolderReader.h" />
     <ClInclude Include="Frame.h" />
-    <ClInclude Include="PicLoader.h" />
-    <ClInclude Include="RectStruct.h" />
+    <ClInclude Include="ContStruct.h" />
     <ClInclude Include="TrackPoint.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

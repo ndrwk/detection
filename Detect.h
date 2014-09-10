@@ -5,7 +5,7 @@
 #include <set>
 #include <chrono>
 #include "Frame.h"
-#include "RectStruct.h"
+#include "ContStruct.h"
 
 
 using namespace cv;

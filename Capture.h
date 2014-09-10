@@ -26,9 +26,11 @@ class Capture
 	bool initFindPoint;
 
 
-	void display(Mat, vector<Rect> allRects);
+	vector <Point2f> getFeaturePoints(vector<Point>);
+	void display(Mat frame, vector<vector<Point>>);
 	void displayTime(Mat);
 	vector<Rect> uniteRect(vector<vector<Point>>);
+	vector<vector<Point>> uniteContours(vector<vector<Point>>);
 
 
 public:

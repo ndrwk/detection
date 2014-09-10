@@ -1,8 +1,6 @@
 ﻿#include "Capture.h"
 #include "Detect.h"
 #include "Frame.h"
-#include "FileReader.h"
-#include "FolderReader.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>

@@ -3,6 +3,7 @@
 #include <mutex>
 #include <ctime>
 #include "ContStruct.h"
+#include <map>
 
 using namespace std;
 using namespace chrono;
@@ -120,78 +121,178 @@ vector <Point2f> Capture::getFeaturePoints(vector<Point> contours)
 }
 
 
-void Capture::cut(vector<Frame>& frames, mutex& mutex_frames)
+void Capture::cut(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, vector<map<milliseconds, vector<Point>>>& allTracks, mutex& mutex_tracks)
 {
 	while (true)
 	{
+//		cout << "framesFlow.size() = " << framesFlow.size() << endl;
+//		cout << "allTracks.size() = " << allTracks.size() << endl;
+		milliseconds thisTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		mutex_frames.lock();
-		for (auto iter = frames.begin(); iter != frames.end();)
+		mutex_tracks.lock();
+
+		for (auto frameIt = framesFlow.begin(); frameIt != framesFlow.end();)
 		{
-			Frame frame = *iter;
-			milliseconds timeNow = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-			if ((timeNow.count() - frame.getTime()) > timeRange)
+			milliseconds frameTime = frameIt->first;
+			if ((thisTime.count() - frameTime.count()) > timeRange)
 			{
-				iter = frames.erase(iter);
+				for (auto trackIt = allTracks.begin(); trackIt != allTracks.end(); )
+				{
+					if ((trackIt->rbegin()->first != lastTime) & (trackIt->size() < 10))
+					{
+						trackIt = allTracks.erase(trackIt);
+						continue;
+					}
+
+					auto mapIt = trackIt->find(frameTime);
+					if (mapIt != trackIt->end())
+					{
+						mapIt = trackIt->erase(mapIt);
+					}
+					if (trackIt->size() == 0)
+					{
+						trackIt = allTracks.erase(trackIt);
+					}
+					else trackIt++;
+				}
+				frameIt = framesFlow.erase(frameIt);
 			}
-			else
-			{
-				iter++;
-			}
+			else frameIt++;
 		}
 		mutex_frames.unlock();
+		mutex_tracks.unlock();
 	}
 }
 
 
-void Capture::find(vector<Frame>& frames, mutex& mutex_frames)
+void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, vector<map<milliseconds, vector<Point>>>& allTracks, mutex& mutex_tracks)
 {
-//	milliseconds lastTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-	BackgroundSubtractorMOG2 bg(10, 25, false);
+	BackgroundSubtractorMOG2 backgroundSubtractor(10, 25, false);
 	vector<Vec4i> hierarchy;
-	vector<Point2f> pointsPrev, pointsNow;
 	TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
 	Size subPixWinSize(10, 10), winSize(31, 31);
 	bool firstTime = true;
-	Mat frame, mask, fgimg, savemask, gray, prevGray;
-	vector<ContStruct> cstructs[2];
+	Mat savemask, gray, prevGray;
 
 	while (true)
 	{
+		Mat frame, mask, fgimg;
 		currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		capture >> frame;
-		bg(frame, mask, -1);
+
+		backgroundSubtractor(frame, mask, -1);
+		Frame frametoMap(frame, mask);
+
+		mutex_frames.lock();
+		framesFlow.emplace(currentTime, frametoMap);
+		mutex_frames.unlock();
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
 		mask.copyTo(savemask);
 		vector<vector<Point>> allContours;
-		vector<Rect> tmpRects;
 		findContours(mask, allContours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_NONE);
-		frame.copyTo(frame);
-		cvtColor(frame, gray, COLOR_BGR2GRAY);
-		allContours = uniteContours(allContours);
-		vector<vector<Point>> conts = allContours;
-		if (cstructs[0].empty())
+		if (allContours.size() > 0 && allContours.size() < 1000)
 		{
-			for (auto i = conts.begin(); i != conts.end(); i++)
+			frame.copyTo(frame);
+			cvtColor(frame, gray, COLOR_BGR2GRAY);
+			vector<vector<Point>> conts = uniteContours(allContours);
+			if (prevGray.empty())
 			{
-				int num = (int)(i - conts.begin());
-
-				vector <Point2f> features = getFeaturePoints(*i);
+				gray.copyTo(prevGray);
+				lastTime = currentTime;
 			}
 
+			mutex_tracks.lock();
+			if (allTracks.empty())
+			{
+				for (auto trackIt = conts.begin(); trackIt != conts.end(); trackIt++)
+				{
+					map<milliseconds, vector<Point>> oneTrack;
+					oneTrack.emplace(currentTime, *trackIt);
+					allTracks.push_back(oneTrack);
+				}
+			}
+			else
+			{
+				vector<uchar> status;
+				vector<float> err;
+				for (auto allTrackIt = allTracks.begin(); allTrackIt != allTracks.end(); allTrackIt++)
+				{
+					vector<Point2f> pointsPrev, pointsNow;
+					auto mapIt = allTrackIt->find(lastTime);
+					if (mapIt == allTrackIt->end()) continue;
+					pointsPrev = getFeaturePoints(mapIt->second);
+					calcOpticalFlowPyrLK(prevGray, gray, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
+					for (auto contIt = conts.begin(); contIt != conts.end(); )
+					{
+						if ((boundingRect(*contIt)&boundingRect(pointsNow)).width > 0)
+						{
+							allTrackIt->emplace(currentTime, *contIt);
+							contIt = conts.erase(contIt);
+						} 
+						else contIt++;
+					}
+				}
+
+				for (auto trackIt = conts.begin(); trackIt != conts.end(); trackIt++)
+				{
+					map<milliseconds, vector<Point>> oneTrack;
+					oneTrack.emplace(currentTime, *trackIt);
+					allTracks.push_back(oneTrack);
+				}
+			}
+			mutex_tracks.unlock();
+//			display(frame, conts);
 		}
-		display(frame, allContours);
 		int delay = 1;
 		waitKey(delay);
 		milliseconds endtime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		cout << "cycle time - " << (endtime - currentTime).count() << endl;
-		swap(prevGray, gray);
+		prevGray = gray;
+		lastTime = currentTime;
 	}
 
 
 }
 
 
+void Capture::display(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, vector<map<milliseconds, vector<Point>>>& allTracks, mutex& mutex_tracks)
+{
+	while (true)
+	{
+		mutex_frames.lock();
+		if (framesFlow.size() == 0)
+		{
+			mutex_frames.unlock();
+			continue;
+		}
+		auto frameIt = framesFlow.rbegin();
+		mutex_frames.unlock();
+		milliseconds time = frameIt->first;
+		Mat outFrame;
+		outFrame = frameIt->second.getImg();
+		mutex_tracks.lock();
+		for (auto trackIt = allTracks.begin(); trackIt != allTracks.end(); trackIt++)
+		{
+			auto mapIt = trackIt->find(time);
+			if (mapIt==trackIt->end()) continue;
+			int number = trackIt - allTracks.begin();
+			rectangle(outFrame, boundingRect(mapIt->second), Scalar(255, 0, 0), 1, 8, 0);
+			stringstream ss;
+			ss << number;
+			string stringNumber = ss.str();
+			putText(outFrame, stringNumber, Point(boundingRect(mapIt->second).x + 5, boundingRect(mapIt->second).y + 5),
+				FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+		}
+		mutex_tracks.unlock();
+		imshow("frame", outFrame);
+		waitKey(10);
+	}
+}
+
+
+
+/*
 void Capture::display(Mat frame, vector<vector<Point>> conts)
 {
 	drawContours(frame, conts, -10, Scalar::all(255));
@@ -211,6 +312,7 @@ void Capture::display(Mat frame, vector<vector<Point>> conts)
 	}
 	imshow("frame", frame);
 }
+*/
 
 void Capture::displayTime(Mat img)
 {

@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
+#include <map>
 #include <thread>
 #include <mutex>
 #include <string>
@@ -13,8 +14,9 @@
 using namespace std;
 using namespace cv;
 
-vector <Frame> frames;
-mutex mutex_frames;
+map<milliseconds, Frame> frames;
+vector<map<milliseconds, vector<Point>>> allTracks;
+mutex mutex_frames, mutex_tracks;
 Detect detect;
 
 const int cameraNumber = 0;
@@ -32,9 +34,9 @@ int main(int argc, char *argv[])
 		cout << "Error: Camera #" << cameraNumber << " is not available now." << endl;
 		return -1;
 	}
-	thread capturing(&Capture::find, &capture, ref(frames), ref(mutex_frames));
-	thread cutting(&Capture::cut, &capture, ref(frames), ref(mutex_frames));
-//	thread display(&Detect::display, &detect, ref(frames), ref(mutex_frames));
+	thread capturing(&Capture::find, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
+	thread cutting(&Capture::cut, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
+	thread display(&Capture::display, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
 //	thread tracking(&Detect::detectPoints, &detect, ref(frames), ref(mutex_frames));
 
 	if (capturing.joinable())
@@ -47,13 +49,11 @@ int main(int argc, char *argv[])
 		cutting.join();
 	}
 
-
-/*
 	if (display.joinable())
 	{
 		display.join();
 	}
-*/
+
 
 /*
 	if (tracking.joinable())

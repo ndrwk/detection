@@ -15,6 +15,8 @@ public:
 	ContStruct(int, vector<Point>, vector<Point2f>);
 	int getNumber();
 	Rect getRect();
+	vector<Point2f> getRepers();
+	vector<Point> getContiur();
 	~ContStruct();
 
 };

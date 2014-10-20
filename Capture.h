@@ -8,6 +8,7 @@
 #include <chrono>
 #include "Frame.h"
 #include "TrackPoint.h"
+#include <vector>
 
 using namespace cv;
 using namespace std;
@@ -20,14 +21,13 @@ class Capture
 	const int MAX_POINTS = 500;
 
 	VideoCapture capture;
-	milliseconds currentTime;
-	vector<TrackPoint> tracks;
-	const int timeRange = 2000; // in milliseconds
+	milliseconds currentTime, lastTime;
+	const int timeRange = 3000; // in milliseconds
 	bool initFindPoint;
 
 
 	vector <Point2f> getFeaturePoints(vector<Point>);
-	void display(Mat frame, vector<vector<Point>>);
+//	void display(Mat frame, vector<vector<Point>>);
 	void displayTime(Mat);
 	vector<Rect> uniteRect(vector<vector<Point>>);
 	vector<vector<Point>> uniteContours(vector<vector<Point>>);
@@ -39,8 +39,9 @@ public:
 	~Capture();
 	bool isOpened();
 	Mat getFrame();
-	void find(vector<Frame>&, mutex&);
-	void cut(vector<Frame>&, mutex&);
+	void find(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, vector<Point>>>&, mutex&);
+	void cut(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, vector<Point>>>&, mutex&);
+	void display(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, vector<Point>>>&, mutex&);
 
 };
 

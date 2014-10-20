@@ -20,6 +20,15 @@ Rect ContStruct::getRect()
 	return boundingRect(contour);
 }
 
+vector<Point2f> ContStruct::getRepers()
+{
+	return repers;
+}
+
+vector<Point> ContStruct::getContiur()
+{
+	return contour;
+}
 
 
 ContStruct::~ContStruct()

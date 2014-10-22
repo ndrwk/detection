@@ -17,7 +17,7 @@ using namespace cv;
 map<milliseconds, Frame> frames;
 vector<map<milliseconds, vector<Point>>> allTracks;
 mutex mutex_frames, mutex_tracks;
-Detect detect;
+//Detect detect;
 
 const int cameraNumber = 0;
 //const string fileName = R"(C:\Temp\cats\cats.avi)";

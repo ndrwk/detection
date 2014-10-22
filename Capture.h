@@ -22,7 +22,7 @@ class Capture
 
 	VideoCapture capture;
 	milliseconds currentTime, lastTime;
-	const int timeRange = 3000; // in milliseconds
+	const int timeRange = 5000; // in milliseconds
 	bool initFindPoint;
 
 
@@ -31,6 +31,7 @@ class Capture
 	void displayTime(Mat);
 	vector<Rect> uniteRect(vector<vector<Point>>);
 	vector<vector<Point>> uniteContours(vector<vector<Point>>);
+	vector<Point2f> convertTo2F(vector<Point>);
 
 
 public:

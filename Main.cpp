@@ -1,5 +1,4 @@
 ﻿#include "Capture.h"
-#include "Detect.h"
 #include "Frame.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -15,7 +14,7 @@ using namespace std;
 using namespace cv;
 
 map<milliseconds, Frame> frames;
-vector<map<milliseconds, vector<Point>>> allTracks;
+vector<map<milliseconds, Rect>> allTracks;
 mutex mutex_frames, mutex_tracks;
 //Detect detect;
 

@@ -7,7 +7,6 @@
 #include <mutex>
 #include <chrono>
 #include "Frame.h"
-#include "TrackPoint.h"
 #include <vector>
 
 using namespace cv;
@@ -23,16 +22,16 @@ class Capture
 	VideoCapture capture;
 	milliseconds currentTime, lastTime;
 	const int timeRange = 5000; // in milliseconds
-	bool initFindPoint;
 
 
 	vector <Point2f> getFeaturePoints(vector<Point>);
-//	void display(Mat frame, vector<vector<Point>>);
+	//	void display(Mat frame, vector<vector<Point>>);
 	void displayTime(Mat);
 	vector<Rect> uniteRect(vector<vector<Point>>);
 	vector<vector<Point>> uniteContours(vector<vector<Point>>);
 	vector<Point2f> convertTo2F(vector<Point>);
-
+	vector<Point> convertBack(vector<Point2f>);
+	vector <Point2f> getPoints(Rect);
 
 public:
 	Capture(int);
@@ -40,9 +39,8 @@ public:
 	~Capture();
 	bool isOpened();
 	Mat getFrame();
-	void find(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, vector<Point>>>&, mutex&);
-	void cut(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, vector<Point>>>&, mutex&);
-	void display(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, vector<Point>>>&, mutex&);
+	void find(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, Rect>>&, mutex&);
+	void cut(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, Rect>>&, mutex&);
+	void display(map<milliseconds, Frame>&, mutex&, vector<map<milliseconds, Rect>>&, mutex&);
 
 };
-

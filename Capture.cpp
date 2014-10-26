@@ -133,10 +133,17 @@ vector <Point2f> Capture::getPoints(Rect rect)
 	vector <Point2f> features;
 	float x = (float)rect.x;
 	float y = (float)rect.y;
+/*
 	features.push_back(Point2f(x + 2, y + 2));
 	features.push_back(Point2f(x + rect.width - 2, y + 2));
 	features.push_back(Point2f(x + rect.width - 2, y + rect.height - 2));
 	features.push_back(Point2f(x + 2, y + rect.height - 2));
+*/
+	features.push_back(Point2f(x, y));
+	features.push_back(Point2f(x + rect.width, y));
+	features.push_back(Point2f(x + rect.width, y + rect.height));
+	features.push_back(Point2f(x, y + rect.height));
+
 	return features;
 }
 
@@ -164,14 +171,23 @@ void Capture::cut(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, vec
 			if ((thisTime.count() - frameTime.count()) > timeRange)
 			{
 				frameIt = framesFlow.erase(frameIt);
-				for (auto trackIt = allTracks.begin(); trackIt != allTracks.end();)
+				for (auto trackIt = allTracks.begin(); trackIt != allTracks.end(); trackIt++)
 				{
 					auto mapIt = trackIt->find(frameTime);
 					if (mapIt != trackIt->end())
 					{
 						mapIt = trackIt->erase(mapIt);
 					}
-					else trackIt++;
+
+
+/*
+					if ((trackIt->size() > 0) && (trackIt->size() < 20) && (trackIt->rbegin()->first.count() < lastTime.count()))
+					{
+						trackIt->clear();
+					}
+*/
+
+
 				}
 			}
 			else frameIt++;
@@ -323,9 +339,11 @@ void Capture::display(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames,
 		{
 			if (trackIt->size() > 1)
 			{
-				//			auto mapIt = trackIt->find(time);
-				//			if (mapIt==trackIt->end()) continue;
-				auto mapIt = trackIt->rbegin();
+				auto mapIt = trackIt->find(time);
+				if (mapIt==trackIt->end()) continue;
+
+//				auto mapIt = trackIt->rbegin();
+
 				int number = trackIt - allTracks.begin();
 				rectangle(outFrame, mapIt->second, Scalar(255, 0, 0), 1, 8, 0);
 				stringstream ss;

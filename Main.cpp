@@ -26,8 +26,8 @@ const string fileName = R"(C:\Temp\cats\768.avi)";
 
 int main(int argc, char *argv[])
 {
-//	Capture capture(cameraNumber);
-	Capture capture(fileName);
+	Capture capture(cameraNumber);
+//	Capture capture(fileName);
 	if (!capture.isOpened())
 	{
 		cout << "Error: Camera #" << cameraNumber << " is not available now." << endl;

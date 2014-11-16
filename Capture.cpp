@@ -268,7 +268,8 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 						pointsPrev.insert(pointsPrev.end(), tmpVec.begin(), tmpVec.end());
 					}
 				}
-				calcOpticalFlowPyrLK(prevGray, gray, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
+//                cout << "pointsPrev = " << pointsPrev.size() << endl;
+			    calcOpticalFlowPyrLK(prevGray, gray, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
 				for (auto allTrackIt = allTracks.begin(); allTrackIt != allTracks.end(); allTrackIt++)
 				{
 					int trackNumber = allTrackIt - allTracks.begin();
@@ -330,7 +331,6 @@ void Capture::display(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames,
 			continue;
 		}
 		auto frameIt = framesFlow.rbegin();
-		mutex_frames.unlock();
 		milliseconds time = frameIt->first;
 		Mat outFrame;
 		outFrame = frameIt->second.getImg();
@@ -353,7 +353,8 @@ void Capture::display(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames,
 					FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
 			}
 		}
-		mutex_tracks.unlock();
+        mutex_frames.unlock();
+        mutex_tracks.unlock();
 		imshow("frame", outFrame);
 		waitKey(10);
 	}

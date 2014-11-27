@@ -36,7 +36,6 @@ int main(int argc, char *argv[])
 	thread capturing(&Capture::find, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
 	thread cutting(&Capture::cut, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
 	thread display(&Capture::display, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
-//	thread tracking(&Detect::detectPoints, &detect, ref(frames), ref(mutex_frames));
 
 	if (capturing.joinable())
 	{

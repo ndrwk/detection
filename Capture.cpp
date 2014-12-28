@@ -302,7 +302,9 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 		int delay = 1;
 		waitKey(delay);
 		milliseconds endtime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-		cout << "cycle time - " << (endtime - currentTime).count() << endl;
+		fps = (int) 1000 / (endtime - currentTime).count();
+//		cout << "cycle time - " << (endtime - currentTime).count() << endl;
+//		cout << "FPS = " << fps << endl;
 		swap(prevGray, gray);
 		lastTime = currentTime;
 	}
@@ -338,12 +340,17 @@ void Capture::display(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames,
 				ss << number;
 				string stringNumber = ss.str();
 				putText(outFrame, stringNumber, Point(r.x + 5, r.y + 5),
-					FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+					FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar(0,0,255), 1, 8);
 			}
 		}
         mutex_frames.unlock();
         mutex_tracks.unlock();
-		imshow("frame", outFrame);
+		stringstream sst;
+		sst << fps;
+		string fpsString = "FPS = " + sst.str();
+		putText(outFrame, fpsString, Point(20, outFrame.rows - 20),
+				FONT_HERSHEY_COMPLEX_SMALL, 0.8, Scalar(255,0,255), 1, 8);
+		imshow("tracks", outFrame);
 		waitKey(10);
 	}
 }

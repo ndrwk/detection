@@ -21,6 +21,7 @@ class Capture
 	VideoCapture capture;
 	milliseconds currentTime, lastTime;
 	const int timeRange = 3000; // in milliseconds
+	int fps;
 
 
 	vector <Point2f> getFeaturePoints(vector<Point>);

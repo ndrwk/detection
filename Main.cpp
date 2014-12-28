@@ -12,35 +12,28 @@ mutex mutex_frames, mutex_tracks;
 
 const int cameraNumber = 0;
 //const string fileName = R"(C:\Temp\cats\cats.avi)";
-const string fileName = R"(/home/drew/ClionProjects/detection/123.avi)";
-const string picname = R"(/home/drew/ClionProjects/hello/img.jpg)";
-
+//const string fileName = R"(/home/drew/ClionProjects/detection/123.avi)";
+const string fileName = R"(/home/drew/ClionProjects/detection/TB.mp4)";
 
 
 int main(int argc, char *argv[])
 {
-	Capture capture(cameraNumber);
-
-    FILE* f = fopen("/home/drew/ClionProjects/detection/123.avi", "r");
-    if (f == NULL)
-        std::cout << "Error ! File does not exist!" << std::endl;
-
-//	Mat img;
-//	img = imread(picname, 1);
-//	if (img.empty()) cout << "Пусто " << picname << endl;
-//
-//	imshow("image", img);
-//	waitKey(0);
-
-
-//	Capture capture(fileName);
+//	Capture capture(cameraNumber);
 //	if (!capture.isOpened())
 //	{
 //		cout << "Error: Camera #" << cameraNumber << " is not available now." << endl;
 //		return -1;
 //	}
+
+	FILE* f = fopen("/home/drew/ClionProjects/detection/123.avi", "r");
+	if (f == NULL) {
+		cout << "Error: File is not found." << endl;
+		return -1;
+	}
+	Capture capture(fileName);
+
+
 	thread capturing(&Capture::find, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
-//	thread cutting(&Capture::cut, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
 	thread display(&Capture::display, &capture, ref(frames), ref(mutex_frames), ref(allTracks), ref(mutex_tracks));
 
 	if (capturing.joinable())

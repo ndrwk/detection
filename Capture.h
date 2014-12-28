@@ -1,8 +1,4 @@
 #pragma once
-//#include <opencv2/opencv.hpp>
-//#include "opencv2/video/tracking.hpp"
-//#include "opencv2/imgproc/imgproc.hpp"
-//#include "opencv2/video/background_segm.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/core/core.hpp"
 #include <mutex>
@@ -25,11 +21,9 @@ class Capture
 
 
 	vector <Point2f> getFeaturePoints(vector<Point>);
-	//	void display(Mat frame, vector<vector<Point>>);
 	void displayTime(Mat);
 	vector<Rect> uniteRect(vector<vector<Point>>);
 	vector<vector<Point>> uniteContours(vector<vector<Point>>);
-//	vector<Point2f> convertTo2F(vector<Point>);
 	vector<Point> convertBack(vector<Point2f>);
 	vector <Point2f> getPoints(Rect);
 

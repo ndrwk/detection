@@ -117,28 +117,6 @@ vector <Point2f> Capture::getFeaturePoints(vector<Point> contours)
 	return features;
 }
 
-//vector <Point> Capture::convertBack(vector<Point2f> features)
-//{
-//	vector <Point> contour;
-//	for (auto i = features.begin(); i != features.end(); i++)
-//	{
-//		contour.push_back(Point((int)i->x, (int)i->y));
-//	}
-//	return contour;
-//}
-
-//vector <Point2f> Capture::getPoints(Rect rect)
-//{
-//	vector <Point2f> features;
-//	float x = (float)rect.x;
-//	float y = (float)rect.y;
-//	features.push_back(Point2f(x, y));
-//	features.push_back(Point2f(x + rect.width, y));
-//	features.push_back(Point2f(x + rect.width, y + rect.height));
-//	features.push_back(Point2f(x, y + rect.height));
-//	return features;
-//}
-
 
 void Capture::cut(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, vector<map<milliseconds, vector<Point>>>& allTracks, mutex& mutex_tracks)
 {
@@ -179,7 +157,6 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 	Size subPixWinSize(10, 10), winSize(31, 31);
 	bool firstTime = true;
 	Mat savemask, gray, prevGray;
-
 	bool endFlag = true;
 	while (endFlag)
 	{
@@ -189,7 +166,6 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 		backgroundSubtractor(frame, mask, -1);
 		mask.copyTo(savemask);
 		Frame frametoMap(frame, savemask);
-
 		mutex_frames.lock();
 		mutex_tracks.lock();
 		for (auto frameIt = framesFlow.begin(); frameIt != framesFlow.end();)
@@ -212,7 +188,6 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 		framesFlow.emplace(currentTime, frametoMap);
 		mutex_frames.unlock();
 		mutex_tracks.unlock();
-
 		fgimg = Scalar::all(0);
 		frame.copyTo(fgimg, mask);
 		vector<vector<Point>> allContours;
@@ -227,7 +202,6 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 				gray.copyTo(prevGray);
 				lastTime = currentTime;
 			}
-
 			mutex_tracks.lock();
 			if (allTracks.empty())
 			{
@@ -257,7 +231,6 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 						pointsPrev.insert(pointsPrev.end(), tmpVec.begin(), tmpVec.end());
 					}
 				}
-//                cout << "pointsPrev = " << pointsPrev.size() << endl;
 			    calcOpticalFlowPyrLK(prevGray, gray, pointsPrev, pointsNow, status, err, winSize, 3, termcrit, 0, 0.001);
 				for (auto allTrackIt = allTracks.begin(); allTrackIt != allTracks.end(); allTrackIt++)
 				{
@@ -269,12 +242,6 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 						for (auto it = pointsNumIt.first; it != pointsNumIt.second; it++)
 						{
 							tmpVecPoints.push_back(pointsNow[it->second]);
-							/*
-							if (status[it->second] != 0)
-							{
-							tmpVecPoints.push_back(pointsNow[it->second]);
-							}
-							*/
 						}
 						Rect tmpRect = boundingRect(tmpVecPoints);
 						for (auto contIt = conts.begin(); contIt != conts.end();)
@@ -303,8 +270,6 @@ void Capture::find(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames, ve
 		waitKey(delay);
 		milliseconds endtime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
 		fps = (int) 1000 / (endtime - currentTime).count();
-//		cout << "cycle time - " << (endtime - currentTime).count() << endl;
-//		cout << "FPS = " << fps << endl;
 		swap(prevGray, gray);
 		lastTime = currentTime;
 	}
@@ -354,30 +319,6 @@ void Capture::display(map<milliseconds, Frame>& framesFlow, mutex& mutex_frames,
 		waitKey(10);
 	}
 }
-
-
-
-/*
-void Capture::display(Mat frame, vector<vector<Point>> conts)
-{
-drawContours(frame, conts, -10, Scalar::all(255));
-for (auto i = conts.begin(); i != conts.end(); i++)
-{
-vector <Point2f> features = getFeaturePoints(*i);
-for (auto it = features.begin(); it != features.end(); it++)
-{
-circle(frame, *it, 2, Scalar(0, 0, 255), -1);
-}
-int number = i - conts.begin();
-stringstream ss;
-ss << number;
-string stringNumber = ss.str();
-rectangle(frame, boundingRect(*i), Scalar(255, 0, 0), 1, 8, 0);
-putText(frame, stringNumber, Point(boundingRect(*i).x + 5, boundingRect(*i).y + 5), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
-}
-imshow("frame", frame);
-}
-*/
 
 void Capture::displayTime(Mat img)
 {

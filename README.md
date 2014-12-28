@@ -4,10 +4,9 @@ It finds motion in a video stream using background subtract and calculates an op
 It's based on the [OpenCV](http://opencv.org/) library.
 
 ## Detected tracks
-[![Found tracks](http://img.youtube.com/vi/zS17b80RPvg/0.jpg)](http://youtu.be/zS17b80RPvg)
+[![Input stream](http://img.youtube.com/vi/tluSr064jPE/0.jpg)](http://youtu.be/tluSr064jPE)
 
-## Input stream 
-[![Input stream](http://img.youtube.com/vi/z2M9xQ3ZrIQ/0.jpg)](http://youtu.be/z2M9xQ3ZrIQ)
+[![Found tracks](http://img.youtube.com/vi/zS17b80RPvg/0.jpg)](http://youtu.be/zS17b80RPvg)
 
 ## License
 

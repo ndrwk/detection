@@ -1,6 +1,5 @@
 ﻿#include "Capture.h"
 #include <thread>
-#include <fstream>
 
 using namespace std;
 using namespace cv;
@@ -8,15 +7,13 @@ using namespace cv;
 map<milliseconds, Frame> frames;
 vector<map<milliseconds, vector<Point>>> allTracks;
 mutex mutex_frames, mutex_tracks;
-//Detect detect;
 
 const int cameraNumber = 0;
-//const string fileName = R"(C:\Temp\cats\cats.avi)";
-//const string fileName = R"(/home/drew/ClionProjects/detection/123.avi)";
-const string fileName = R"(/home/drew/ClionProjects/detection/TB.mp4)";
+const string fileName = R"(/home/drew/ClionProjects/detection/123.avi)";
+//const string fileName = R"(/home/drew/ClionProjects/detection/TB.mp4)";
 
 
-int main(int argc, char *argv[])
+int main()
 {
 //	Capture capture(cameraNumber);
 //	if (!capture.isOpened())
@@ -25,11 +22,13 @@ int main(int argc, char *argv[])
 //		return -1;
 //	}
 
-	FILE* f = fopen("/home/drew/ClionProjects/detection/123.avi", "r");
+	const char* file = fileName.c_str();
+	FILE* f = fopen(file, "r");
 	if (f == NULL) {
-		cout << "Error: File is not found." << endl;
+		cout << "Error: File "<< file << " is not found." << endl;
 		return -1;
 	}
+	fclose(f);
 	Capture capture(fileName);
 
 
@@ -41,23 +40,11 @@ int main(int argc, char *argv[])
 		capturing.join();
 	}
 
-//	if (cutting.joinable())
-//	{
-//		cutting.join();
-//	}
 
 	if (display.joinable())
 	{
 		display.join();
 	}
-
-
-/*
-	if (tracking.joinable())
-	{
-		tracking.join();
-	}
-*/
 
 
 	return 0;

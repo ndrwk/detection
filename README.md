@@ -4,9 +4,11 @@ It finds motion in a video stream and calculates an optical flow for a sparse fe
 It's based on the [OpenCV](http://opencv.org/) library.
 
 ## Example
-[![Input stream](http://img.youtube.com/vi/tluSr064jPE/0.jpg)](http://youtu.be/tluSr064jPE)
+[http://youtu.be/tluSr064jPE](http://youtu.be/tluSr064jPE)
+[![](http://img.youtube.com/vi/tluSr064jPE/0.jpg)](http://youtu.be/tluSr064jPE)
 
-[![Found tracks](http://img.youtube.com/vi/zS17b80RPvg/0.jpg)](http://youtu.be/zS17b80RPvg)
+[http://youtu.be/zS17b80RPvg](http://youtu.be/zS17b80RPvg)
+[![](http://img.youtube.com/vi/zS17b80RPvg/0.jpg)](http://youtu.be/zS17b80RPvg)
 
 ## License
 
